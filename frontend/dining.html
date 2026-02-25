@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dining | LABREEZPOINT HOTEL</title>
+    <style>
+        :root { --burgundy: #8B1A2B; --lime-green: #32CD32; --off-white: #fdfdfd; --dark-bg: #1a1a1a; }
+        body { margin: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--off-white); padding-bottom: 120px; }
+        
+        nav { background: var(--burgundy); padding: 0 60px; display: flex; justify-content: space-between; align-items: center; height: 70px; }
+        .logo-text { color: white; font-size: 22px; font-weight: bold; text-decoration: none; }
+        .logo-text span { color: var(--lime-green); }
+        .nav-links a { color: white; text-decoration: none; text-transform: uppercase; font-size: 13px; margin-left: 20px; }
+
+        .page-header { background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070'); background-size: cover; height: 30vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
+
+        .menu-grid { padding: 60px; max-width: 1200px; margin: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        
+        .food-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; }
+        .slider-container { position: relative; height: 220px; background: #eee; overflow: hidden; }
+        .slider-img { width: 100%; height: 100%; object-fit: cover; position: absolute; opacity: 0; transition: opacity 0.5s ease; }
+        .slider-img.active { opacity: 1; }
+        
+        .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 8px; cursor: pointer; z-index: 2; }
+        .btn-prev { left: 0; }
+        .btn-next { right: 0; }
+
+        .food-info { padding: 20px; text-align: center; flex-grow: 1; }
+        .food-info h3 { margin: 0; color: var(--burgundy); text-transform: capitalize; }
+        .food-details { font-size: 0.85rem; color: #666; margin: 10px 0; min-height: 40px; line-height: 1.4; }
+        
+        .price-container { margin: 10px 0; }
+        .current-price { font-weight: bold; font-size: 1.3rem; color: var(--dark-bg); }
+        
+        .btn-add { background: var(--burgundy); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-add:hover { background: var(--lime-green); color: black; }
+
+        /* Order Summary Styles */
+        .cart-summary { position: fixed; bottom: 20px; right: 20px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); border-top: 5px solid var(--burgundy); width: 320px; z-index: 1000; }
+        .cart-summary h3 { margin-top: 0; font-size: 1.1rem; color: var(--burgundy); border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        .summary-scroll { max-height: 250px; overflow-y: auto; margin-bottom: 10px; }
+        .order-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #eee; }
+        .item-qty-label { color: var(--burgundy); font-weight: bold; margin-right: 5px; }
+        
+        /* The "-" button style */
+        .btn-reduce { background: #ff4444; color: white; border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-weight: bold; margin-left: 10px; font-size: 16px; line-height: 1; }
+        .btn-reduce:hover { background: #cc0000; }
+        
+        .room-section { background: #f9f9f9; padding: 10px; border-radius: 4px; margin-bottom: 10px; border-left: 4px solid var(--lime-green); font-size: 0.9rem; }
+        .total-line { border-top: 2px solid #ddd; padding-top: 10px; font-weight: bold; font-size: 1.2rem; display: flex; justify-content: space-between; }
+        .btn-pay { background: var(--lime-green); color: black; border: none; width: 100%; padding: 12px; font-weight: bold; cursor: pointer; margin-top: 15px; border-radius: 5px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="logo-text">LA <span>BREEZE</span> POINT</a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="booking.html">Accommodation</a>
+            <a href="dining.html" style="color: var(--lime-green);">Dining</a>
+        </div>
+    </nav>
+    
+    <header class="page-header"><h1>Culinary Delights</h1></header>
+
+    <div class="menu-grid" id="menu-display-area"></div>
+
+    <div class="cart-summary" id="cart-summary">
+        <h3>Your Selection</h3>
+        <div class="summary-scroll">
+            <div id="room-selection-display" class="room-section"></div>
+            <div id="food-items-display"></div>
+        </div>
+        <div class="total-line">
+            <span>Total:</span>
+            <span>$<span id="grand-total">0.00</span></span>
+        </div>
+        <button class="btn-pay" onclick="proceedToPayment()">Confirm Order</button>
+    </div>
+
+    <script>
+        // Ensure the order object is fully structured even if localStorage is empty
+        let rawOrder = localStorage.getItem('currentOrder');
+        let order = rawOrder ? JSON.parse(rawOrder) : { rooms: {}, foods: {}, total: 0 };
+        if (!order.foods) order.foods = {};
+        if (!order.rooms) order.rooms = {};
+
+        async function fetchMenu() {
+            try {
+                const response = await fetch('/api/services');
+                const services = await response.json();
+                const menuArea = document.getElementById('menu-display-area');
+                menuArea.innerHTML = '';
+                const meals = services.filter(s => s.type === 'food');
+                
+                meals.forEach((meal, index) => {
+                    const mealId = `meal-${index}`;
+                    const photos = Array.isArray(meal.photos) ? meal.photos : [meal.photos];
+                    let imgHtml = photos.map((photo, i) => `<img src="${photo}" class="slider-img ${i === 0 ? 'active' : ''}">`).join('');
+
+                    menuArea.innerHTML += `
+                        <div class="food-card" id="${mealId}">
+                            <div class="slider-container"><div class="img-wrapper">${imgHtml}</div></div>
+                            <div class="food-info">
+                                <h3>${meal.name}</h3>
+                                <div class="price-container"><span class="current-price">$${meal.price}</span></div>
+                                <button class="btn-add" onclick="addItem('${meal.name}', ${meal.price})">Add to Order</button>
+                            </div>
+                        </div>`;
+                });
+                updateOrderUI();
+            } catch (err) { console.error("Error:", err); }
+        }
+
+        function addItem(name, price) {
+            if (!order.foods[name]) {
+                order.foods[name] = { price: parseFloat(price), qty: 0 };
+            }
+            order.foods[name].qty += 1;
+            saveAndUpdate();
+        }
+
+        // REDUCE QUANTITY FUNCTION
+        function reduceItem(name, type) {
+            let target = (type === 'food') ? order.foods : order.rooms;
+            
+            if (target[name]) {
+                target[name].qty -= 1;
+                if (target[name].qty <= 0) {
+                    delete target[name];
+                }
+            }
+            saveAndUpdate();
+        }
+
+        function saveAndUpdate() {
+            let total = 0;
+            // Calculate Rooms
+            for (let r in order.rooms) {
+                total += order.rooms[r].price * order.rooms[r].qty;
+            }
+            // Calculate Foods
+            for (let f in order.foods) {
+                total += order.foods[f].price * order.foods[f].qty;
+            }
+            
+            order.total = total;
+            localStorage.setItem('currentOrder', JSON.stringify(order));
+            localStorage.setItem('totalToPay', total.toFixed(2));
+            updateOrderUI();
+        }
+
+        function updateOrderUI() {
+            const foodList = document.getElementById('food-items-display');
+            const roomList = document.getElementById('room-selection-display');
+            
+            // Rooms Display
+            roomList.innerHTML = '';
+            let roomKeys = Object.keys(order.rooms);
+            if (roomKeys.length > 0) {
+                roomKeys.forEach(name => {
+                    roomList.innerHTML += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <span><strong>🏠 ${name}</strong> (x${order.rooms[name].qty})</span>
+                            <button class="btn-reduce" onclick="reduceItem('${name}', 'room')">−</button>
+                        </div>`;
+                });
+            } else {
+                roomList.innerHTML = '<span style="color:#999">No room selected</span>';
+            }
+
+            // Food Display
+            foodList.innerHTML = '';
+            let foodKeys = Object.keys(order.foods);
+            foodKeys.forEach(name => {
+                const item = order.foods[name];
+                foodList.innerHTML += `
+                    <div class="order-item">
+                        <div><span class="item-qty-label">${item.qty}x</span> ${name}</div>
+                        <div style="display:flex; align-items:center;">
+                            <span>$${(item.price * item.qty).toFixed(2)}</span>
+                            <button class="btn-reduce" onclick="reduceItem('${name}', 'food')">−</button>
+                        </div>
+                    </div>`;
+            });
+
+            document.getElementById('grand-total').innerText = order.total.toFixed(2);
+        }
+
+        function proceedToPayment() {
+            if (order.total <= 0) { return alert("Order is empty!"); }
+            window.location.href = 'payment.html';
+        }
+
+        window.onload = fetchMenu;
+    </script>
+</body>
+</html>

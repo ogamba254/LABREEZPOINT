@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt | LABREEZPOINT</title>
+    <style>
+        :root { --burgundy: #8B1A2B; --dark: #1a1a1a; --gray: #f4f4f4; }
+        body { font-family: 'Courier New', Courier, monospace; background: #ddd; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        
+        .receipt-card { 
+            background: white; width: 380px; padding: 30px; border-radius: 2px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2); position: relative;
+        }
+
+        /* Serrated edge effect for that "real receipt" look */
+        .receipt-card::after {
+            content: ""; position: absolute; bottom: -10px; left: 0; width: 100%; height: 10px;
+            background: linear-gradient(-45deg, transparent 5px, white 5px), linear-gradient(45deg, transparent 5px, white 5px);
+            background-size: 10px 10px;
+        }
+
+        .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 15px; margin-bottom: 15px; }
+        .header h2 { margin: 0; color: var(--burgundy); letter-spacing: 2px; }
+        .header p { margin: 5px 0; font-size: 0.8rem; text-transform: uppercase; }
+
+        .details-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; }
+        .bold { font-weight: bold; }
+
+        .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; border-bottom: 2px dashed #333; }
+        .items-table th { text-align: left; font-size: 0.8rem; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .items-table td { padding: 8px 0; font-size: 0.85rem; }
+
+        .totals { margin-top: 10px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; margin-top: 5px; }
+
+        .footer { text-align: center; margin-top: 30px; font-size: 0.8rem; border-top: 1px solid #eee; padding-top: 15px; }
+        
+        .no-print { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+        .btn { padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; font-family: sans-serif; font-weight: bold; }
+        .btn-print { background: var(--burgundy); color: white; }
+        .btn-home { background: var(--dark); color: white; text-decoration: none; font-size: 13px; line-height: 24px; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .no-print { display: none; }
+            .receipt-card { box-shadow: none; border: none; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+        <div class="receipt-card" id="receipt">
+            <div class="header">
+                <h2>LA BREEZE POINT</h2>
+                <p>Nairobi, Kenya</p>
+                <p>Tel: +254 700 000 000</p>
+            </div>
+
+            <div class="details-row"><span>Date:</span> <span id="date">--/--/----</span></div>
+            <div class="details-row"><span>Receipt #:</span> <span id="receiptId">#000000</span></div>
+            <div class="details-row"><span>Customer:</span> <span id="custName" class="bold">---</span></div>
+            <div class="details-row"><span>Method:</span> <span id="payMethod" class="bold">---</span></div>
+
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Item Description</th>
+                        <th style="text-align: center;">Qty</th>
+                        <th style="text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsBody">
+                    </tbody>
+            </table>
+
+            <div class="totals">
+                <div class="total-row">
+                    <span>TOTAL</span>
+                    <span id="grandTotal">KSH 0.00</span>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>Thank you for choosing La Breeze Point!</p>
+                <p>Serving you is our pleasure.</p>
+                <p>*** Keep this for your records ***</p>
+            </div>
+        </div>
+
+        <div class="no-print">
+            <button class="btn btn-print" onclick="window.print()">Print Receipt</button>
+            <a href="index.html" class="btn btn-home">Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+    window.onload = function() {
+        // MATCHED KEY: changed from 'lastTransaction' to 'lastReceipt'
+        const txData = JSON.parse(localStorage.getItem('lastReceipt'));
+        
+        if (!txData) {
+            alert("No receipt data found. Returning home.");
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // Fill Header Details
+        // Check if date exists, otherwise use current date
+        document.getElementById('date').innerText = txData.date || new Date().toLocaleString();
+        
+        // Handle Receipt ID: use txId from localStorage
+        const displayId = txData.transactionId || "LB" + Math.floor(Math.random() * 1000000);
+        document.getElementById('receiptId').innerText = "#" + displayId;
+        
+        document.getElementById('custName').innerText = txData.name || "Valued Customer";
+        document.getElementById('payMethod').innerText = txData.method || "Paid";
+        
+        // Format the total with commas (e.g., 1,000.00)
+        const totalAmount = parseFloat(txData.amount) || 0;
+        document.getElementById('grandTotal').innerText = "KSH " + totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+        // Fill Items Table
+        const itemsBody = document.getElementById('itemsBody');
+        const items = txData.items; // This is the object containing foods
+
+        let itemsHtml = '';
+        if (items && Object.keys(items).length > 0) {
+            for (const [name, data] of Object.entries(items)) {
+                itemsHtml += `
+                    <tr>
+                        <td>${name}</td>
+                        <td style="text-align: center;">${data.qty}</td>
+                        <td style="text-align: right;">${(data.price * data.qty).toLocaleString()}</td>
+                    </tr>
+                `;
+            }
+        } else {
+            itemsHtml = '<tr><td colspan="3" style="text-align:center;">Order processed</td></tr>';
+        }
+        
+        itemsBody.innerHTML = itemsHtml;
+
+        // Clean up: Optional - remove receipt from storage after 5 minutes
+        // so it doesn't show old receipts next time
+        // setTimeout(() => localStorage.removeItem('lastReceipt'), 300000);
+    };
+</script>
+</body>
+</html>

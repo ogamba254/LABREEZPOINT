@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | LABREEZPOINT</title>
+    <style>
+        :root {
+            --burgundy: #8B1A2B;
+            --lime-green: #32CD32;
+            --dark-bg: #1a1a1a;
+        }
+        body { 
+            background: var(--dark-bg); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        .login-card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            width: 350px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5); 
+            border-top: 5px solid var(--burgundy);
+        }
+        h2 { text-align: center; color: var(--burgundy); margin-bottom: 25px; letter-spacing: 1px; }
+        
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--burgundy); outline: none; box-shadow: 0 0 5px rgba(139, 26, 43, 0.2); }
+
+        .toggle-eye {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+            user-select: none;
+            font-size: 1.1rem;
+        }
+
+        .btn-login { 
+            width: 100%; 
+            padding: 14px; 
+            background: var(--burgundy); 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        .btn-login:hover { background: var(--lime-green); color: black; }
+        .footer-text { text-align: center; font-size: 0.85rem; color: #666; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>LA BREEZE ADMIN</h2>
+        <input type="text" id="username" placeholder="Admin Username">
+        
+        <div class="password-wrapper">
+            <input type="password" id="password" placeholder="Password">
+            <span class="toggle-eye" id="toggleEye" onclick="togglePassword()">👁️</span>
+        </div>
+
+        <button class="btn-login" onclick="handleLogin()">Sign In</button>
+        <p class="footer-text">Unauthorized access is prohibited.</p>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('toggleEye');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.textContent = '🙈'; 
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.textContent = '👁️'; 
+            }
+        }
+
+        async function handleLogin() {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+
+            if(!user || !pass) {
+                alert("Please fill in all fields");
+                return;
+            }
+
+            try {
+                // FIXED: Changed endpoint from '/api/auth/login' to '/api/admin-login'
+                const response = await fetch('/api/admin-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    localStorage.setItem('adminToken', data.token);
+                    alert("Access Granted. Welcome, " + user + "!");
+                    window.location.href = 'admin.html';
+                } else {
+                    // Show specific message from server if available
+                    alert(data.message || "Invalid Credentials");
+                }
+            } catch (error) {
+                console.error("Login Error:", error);
+                alert("Connection failed. Check if server.js is running in the terminal.");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LABREEZPOINT HOTEL | Luxury & Dining</title>
+    <style>
+        :root {
+            --burgundy: #8B1A2B; 
+            --lime-green: #32CD32; 
+            --off-white: #fdfdfd;
+            --dark-bg: #1a1a1a;
+        }
+
+        body { margin: 0; font-family: 'Helvetica Neue', Arial, sans-serif; overflow-x: hidden; background-color: var(--off-white); }
+
+        /* Top Bar */
+        .top-info { background: #222; color: white; padding: 8px 60px; display: flex; justify-content: space-between; font-size: 12px; letter-spacing: 1px; }
+
+        /* Navigation */
+        nav {
+            background: var(--burgundy);
+            padding: 0 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo-text { color: white; font-size: 22px; font-weight: bold; text-decoration: none; }
+        .logo-text span { color: var(--lime-green); }
+        
+        .nav-links { display: flex; gap: 25px; align-items: center; }
+        .nav-links a { color: white; text-decoration: none; text-transform: uppercase; font-size: 13px; font-weight: 600; transition: 0.3s; }
+        .nav-links a:hover { color: var(--lime-green); }
+
+        /* Deliveries Button Styling */
+        .btn-nav-order {
+            background: var(--lime-green);
+            color: #1a1a1a !important;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: 800 !important;
+            transition: 0.3s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+        .btn-nav-order:hover {
+            background: white;
+            transform: scale(1.05);
+        }
+
+        /* Cart Badge */
+        #cart-count {
+            background: var(--burgundy);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: none; /* Hidden if 0 */
+        }
+
+        /* Hero Slider */
+        .hero-slider { position: relative; width: 100%; height: 80vh; overflow: hidden; background: #000; }
+        .hero-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.5s ease-in-out; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; }
+        .hero-slide.active { opacity: 1; }
+        .hero-slider::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 2; }
+        .hero-content { position: relative; z-index: 5; color: white; text-align: center; max-width: 800px; }
+        .hero-content p { font-size: 18px; color: var(--lime-green); font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 4px; }
+        .hero-content h1 { font-size: 55px; margin: 0; text-transform: uppercase; line-height: 1.1; }
+
+        /* Showcase Grid */
+        .showcase-section { padding: 100px 60px; text-align: center; }
+        .card-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 50px; max-width: 1200px; margin: 50px auto 0; }
+        .card { background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: 0.4s; position: relative; }
+        .card:hover { transform: translateY(-10px); }
+        .card img { width: 100%; height: 250px; object-fit: cover; }
+        
+        .price-badge {
+            position: absolute; top: 15px; right: 15px; background: var(--burgundy); color: white;
+            padding: 8px 15px; border-radius: 5px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 10;
+        }
+        .old-price-front { text-decoration: line-through; font-size: 0.8rem; opacity: 0.8; margin-right: 5px; }
+
+        .card-content { padding: 25px; text-align: left; }
+        .card-content h3 { color: var(--burgundy); margin: 0 0 10px 0; font-size: 20px; text-transform: uppercase; }
+        .card-content p { color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+
+        .btn-book { background: var(--burgundy); color: white; border: none; padding: 12px 25px; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; width: 100%; }
+        .btn-book:hover { background: var(--lime-green); color: black; }
+
+        /* Footer Styles */
+        footer { background: var(--dark-bg); color: #ccc; padding: 60px 60px 20px; font-size: 14px; margin-top: 50px; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; border-bottom: 1px solid #333; padding-bottom: 40px; }
+        .footer-col h4 { color: white; margin-bottom: 20px; text-transform: uppercase; font-size: 16px; border-left: 3px solid var(--lime-green); padding-left: 10px; }
+        .footer-links { list-style: none; padding: 0; margin: 0; }
+        .footer-links li { margin-bottom: 12px; }
+        .footer-links a { color: #ccc; text-decoration: none; transition: 0.3s; }
+        .footer-links a:hover { color: var(--lime-green); padding-left: 5px; }
+
+        @media (max-width: 900px) {
+            .card-container { grid-template-columns: 1fr; }
+            nav { padding: 0 20px; }
+            .nav-links { gap: 10px; }
+            .nav-links a { font-size: 11px; }
+            .btn-nav-order { padding: 8px 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-info">
+        <div>📍 Nairobi, Kenya - The Home of Elegance</div>
+        <div>📞 Reservations: +254 736 801 389</div>
+    </div>
+
+    <nav>
+        <a href="index.html" class="logo-text">LA <span>BREEZE</span> POINT</a>
+        <div class="nav-links">
+            <a href="index.html" style="color: var(--lime-green);">Home</a>
+            <a href="booking.html">Accommodation</a>
+            <a href="dining.html">Dining</a>
+            <a href="deliveries.html" class="btn-nav-order">
+                Deliveries <span id="cart-count">0</span>
+            </a>
+            <a href="login.html">Login</a> 
+        </div>
+    </nav>
+
+    <div class="hero-slider">
+        <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=2070');">
+            <div class="hero-content">
+                <p>Your Journey Begins Here</p>
+                <h1>Experience Luxury & <br>Premium Comfort</h1>
+            </div>
+        </div>
+    </div>
+
+    <section class="showcase-section">
+        <h2 style="color: var(--burgundy); font-size: 32px; margin-bottom: 10px; letter-spacing: 1px;">OUR SIGNATURE OFFERS</h2>
+        <div style="width: 60px; height: 3px; background: var(--lime-green); margin: 0 auto;"></div>
+        <div class="card-container" id="specialties-container"></div>
+    </section>
+
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h3 style="color: white; margin-top: 0;">LA <span style="color: var(--lime-green);">BREEZE</span> POINT</h3>
+                <p>Where luxury meets hospitality. Your premier destination in Nairobi.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul class="footer-links">
+                    <li><a href="booking.html">Accommodations</a></li>
+                    <li><a href="dining.html">Dining</a></li>
+                    <li><a href="login.html">Staff Login</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Contact Info</h4>
+                <p>📍 Limuru Road, Nairobi</p>
+                <p>📞 +254 736 801 389</p>
+            </div>
+        </div>
+        <div style="text-align: center; padding-top: 30px; font-size: 12px; color: #666;">
+            &copy; 2026 LABREEZPOINT HOTEL. All Rights Reserved.
+        </div>
+    </footer>
+
+    <script>
+        function quickBook(type) {
+            if (type === 'room') {
+                window.location.href = 'booking.html'; 
+            } else {
+                window.location.href = 'dining.html'; 
+            }
+        }
+
+        // Logic to update the badge count on the Deliveries button
+        function updateCartBadge() {
+            const order = JSON.parse(localStorage.getItem('currentOrder')) || { rooms: {}, foods: {} };
+            const countDisplay = document.getElementById('cart-count');
+            
+            let totalItems = 0;
+            if(order.rooms) Object.values(order.rooms).forEach(item => totalItems += item.qty);
+            if(order.foods) Object.values(order.foods).forEach(item => totalItems += item.qty);
+
+            if (totalItems > 0) {
+                countDisplay.innerText = totalItems;
+                countDisplay.style.display = 'inline-block';
+            } else {
+                countDisplay.style.display = 'none';
+            }
+        }
+
+        async function loadLiveServices() {
+            try {
+                const response = await fetch("/api/services");
+                const services = await response.json();
+                
+                if (services && services.length > 0) {
+                    const container = document.getElementById('specialties-container');
+                    container.innerHTML = ""; 
+
+                    services.forEach(item => {
+                        const img = (item.photos && item.photos.length > 0) ? item.photos[0] : 'https://via.placeholder.com/400x300';
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        
+                        card.innerHTML = `
+                            <div class="price-badge">
+                                ${item.oldPrice ? `<span class="old-price-front">$${item.oldPrice}</span>` : ''}
+                                $${item.price}
+                            </div>
+                            <img src="${img}" alt="${item.name}">
+                            <div class="card-content">
+                                <span style="font-size: 10px; color: var(--lime-green); font-weight: bold; text-transform: uppercase;">${item.type}</span>
+                                <h3>${item.name}</h3>
+                                <p>${item.details || 'Experience world-class quality and comfort.'}</p>
+                                <button class="btn-book" onclick="quickBook('${item.type}')">
+                                    Book Now
+                                </button>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                }
+            } catch (err) {
+                console.log("Error loading services.");
+            }
+        }
+
+        window.onload = function() {
+            loadLiveServices();
+            updateCartBadge();
+        };
+    </script>
+</body>
+</html>

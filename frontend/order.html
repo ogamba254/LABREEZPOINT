@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Order Summary</title>
+    <style>
+        .box { max-width: 500px; margin: 50px auto; border: 1px solid #ccc; padding: 20px; border-radius: 10px; }
+        .summary-item { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .total { font-size: 1.5rem; border-top: 2px solid #333; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>Your Order Summary</h2>
+        <div id="summary"></div>
+        <div class="total">Total: $<span id="grandTotal">0</span></div>
+        <button onclick="window.location.href='payment.html'" style="width:100%; padding:15px; background:orange; margin-top:20px;">Proceed to Payment</button>
+    </div>
+
+    <script>
+        const room = JSON.parse(localStorage.getItem('selectedRoom'));
+        const foods = JSON.parse(localStorage.getItem('selectedFood')) || [];
+        let total = room ? room.price : 0;
+        
+        let html = `<div class="summary-item"><span>Room: ${room.name}</span><span>$${room.price}</span></div>`;
+        foods.forEach(f => {
+            html += `<div class="summary-item"><span>Food: ${f.name}</span><span>$${f.price}</span></div>`;
+            total += f.price;
+        });
+        
+        document.getElementById('summary').innerHTML = html;
+        document.getElementById('grandTotal').innerText = total;
+        localStorage.setItem('totalToPay', total);
+    </script>
+</body>
+</html>

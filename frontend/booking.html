@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accommodation | LABREEZPOINT HOTEL</title>
+    <style>
+        :root { --burgundy: #8B1A2B; --lime-green: #32CD32; --off-white: #fdfdfd; --dark-bg: #1a1a1a; }
+        body { margin: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--off-white); padding-bottom: 150px; }
+        
+        nav { background: var(--burgundy); padding: 0 60px; display: flex; justify-content: space-between; align-items: center; height: 70px; }
+        .logo-text { color: white; font-size: 22px; font-weight: bold; text-decoration: none; }
+        .logo-text span { color: var(--lime-green); }
+        .nav-links a { color: white; text-decoration: none; text-transform: uppercase; font-size: 13px; margin-left: 20px; }
+
+        .page-header { background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070'); background-size: cover; height: 30vh; display: flex; justify-content: center; align-items: center; color: white; }
+
+        .content-section { padding: 60px; max-width: 1200px; margin: auto; }
+        .room-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
+
+        .room-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .slider-container { position: relative; height: 250px; background: #eee; overflow: hidden; }
+        .slider-img { width: 100%; height: 100%; object-fit: cover; position: absolute; opacity: 0; transition: opacity 0.5s ease; }
+        .slider-img.active { opacity: 1; }
+        
+        .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 10px; cursor: pointer; z-index: 2; font-weight: bold; }
+        .btn-prev { left: 0; }
+        .btn-next { right: 0; }
+
+        .room-info { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
+        .room-info h3 { margin: 0; color: var(--burgundy); text-transform: capitalize; }
+        
+        .room-details { font-size: 0.9rem; color: #666; margin: 15px 0; line-height: 1.4; }
+        .price-wrapper { margin-bottom: 20px; }
+        .room-price { font-size: 26px; font-weight: bold; color: var(--dark-bg); }
+
+        .btn-select { background: var(--burgundy); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; font-weight: bold; text-transform: uppercase; margin-top: auto; transition: 0.3s; }
+        .btn-select:hover { background: var(--lime-green); color: black; }
+
+        /* Floating Order Summary */
+        .order-summary-box {
+            position: fixed; bottom: 20px; right: 20px; background: white; width: 320px;
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.2); border-radius: 10px; padding: 20px;
+            border-top: 5px solid var(--burgundy); z-index: 1000;
+        }
+        .order-summary-box h3 { margin: 0 0 15px 0; font-size: 18px; color: var(--burgundy); border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        .summary-items-list { max-height: 250px; overflow-y: auto; margin-bottom: 15px; }
+        .order-item { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #eee; }
+        
+        .item-qty-label { font-weight: bold; color: var(--burgundy); margin-right: 5px; }
+        
+        /* The "-" button style for consistency */
+        .btn-reduce { background: #ff4444; color: white; border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-weight: bold; margin-left: 10px; font-size: 16px; line-height: 1; }
+        .btn-reduce:hover { background: #cc0000; }
+        
+        .total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; margin-top: 15px; color: #000; border-top: 2px solid #ddd; padding-top: 10px; }
+        .btn-confirm { background: var(--lime-green); color: black; border: none; width: 100%; padding: 12px; font-weight: bold; cursor: pointer; margin-top: 15px; border-radius: 5px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="logo-text">LA <span>BREEZE</span> POINT</a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="booking.html" style="color: var(--lime-green);">Accommodation</a>
+            <a href="dining.html">Dining</a>
+        </div>
+    </nav>
+
+    <header class="page-header"><h1>Our Sleeping Areas</h1></header>
+
+    <section class="content-section"><div class="room-grid" id="room-display-area"></div></section>
+
+    <div class="order-summary-box" id="summary-box" style="display: none;">
+        <h3>Your Selection</h3>
+        <div id="summary-items" class="summary-items-list"></div>
+        <div class="total-row">
+            <span>Total:</span>
+            <span>$<span id="summary-total">0.00</span></span>
+        </div>
+        <button class="btn-confirm" onclick="proceedToPayment()">Confirm & Pay Now</button>
+    </div>
+
+    <script>
+        // Initialize order and ensure child objects exist
+        let order = JSON.parse(localStorage.getItem('currentOrder')) || { rooms: {}, foods: {}, total: 0 };
+        if (!order.rooms) order.rooms = {};
+        if (!order.foods) order.foods = {};
+
+        async function fetchRooms() {
+            try {
+                const response = await fetch('/api/services');
+                const services = await response.json();
+                const displayArea = document.getElementById('room-display-area');
+                displayArea.innerHTML = '';
+                const rooms = services.filter(s => s.type === 'room');
+
+                rooms.forEach((room, index) => {
+                    const roomId = `room-${index}`;
+                    const photos = Array.isArray(room.photos) ? room.photos : [room.photos];
+                    let imgHtml = photos.map((photo, i) => `<img src="${photo}" class="slider-img ${i === 0 ? 'active' : ''}">`).join('');
+
+                    displayArea.innerHTML += `
+                        <div class="room-card" id="${roomId}">
+                            <div class="slider-container"><div class="img-wrapper">${imgHtml}</div></div>
+                            <div class="room-info">
+                                <h3>${room.name}</h3>
+                                <p class="room-details">${room.details || 'Luxury sleeping area.'}</p>
+                                <div class="price-wrapper"><span class="room-price">$${room.price}</span></div>
+                                <button class="btn-select" onclick="addItem('${room.name}', ${room.price})">Book Now</button>
+                            </div>
+                        </div>`;
+                });
+                updateSummaryDisplay();
+            } catch (err) { console.error("Database Error:", err); }
+        }
+
+        function addItem(name, price) {
+            if (!order.rooms[name]) {
+                order.rooms[name] = { price: parseFloat(price), qty: 0 };
+            }
+            order.rooms[name].qty += 1;
+            saveAndUpdate();
+        }
+
+        function reduceItem(name, type) {
+            let target = (type === 'room') ? order.rooms : order.foods;
+            if (target[name]) {
+                target[name].qty -= 1;
+                if (target[name].qty <= 0) delete target[name];
+            }
+            saveAndUpdate();
+        }
+
+        function saveAndUpdate() {
+            let total = 0;
+            for (let r in order.rooms) total += order.rooms[r].price * order.rooms[r].qty;
+            for (let f in order.foods) total += order.foods[f].price * order.foods[f].qty;
+            
+            order.total = total;
+            localStorage.setItem('currentOrder', JSON.stringify(order));
+            localStorage.setItem('totalToPay', total.toFixed(2));
+            updateSummaryDisplay();
+        }
+
+        function updateSummaryDisplay() {
+            const container = document.getElementById('summary-items');
+            const box = document.getElementById('summary-box');
+            container.innerHTML = '';
+            
+            let roomKeys = Object.keys(order.rooms);
+            let foodKeys = Object.keys(order.foods);
+
+            if (roomKeys.length > 0 || foodKeys.length > 0) {
+                box.style.display = 'block';
+                
+                // Render Rooms
+                roomKeys.forEach(name => {
+                    const item = order.rooms[name];
+                    container.innerHTML += `
+                        <div class="order-item">
+                            <div><span class="item-qty-label">${item.qty}x</span> ${name}</div>
+                            <div style="display:flex; align-items:center;">
+                                <span>$${(item.price * item.qty).toFixed(2)}</span>
+                                <button class="btn-reduce" onclick="reduceItem('${name}', 'room')">−</button>
+                            </div>
+                        </div>`;
+                });
+
+                // Render Food (if any from dining page)
+                foodKeys.forEach(name => {
+                    const item = order.foods[name];
+                    container.innerHTML += `
+                        <div class="order-item" style="border-left: 3px solid var(--lime-green); padding-left: 8px;">
+                            <div><span class="item-qty-label">${item.qty}x</span> ${name}</div>
+                            <div style="display:flex; align-items:center;">
+                                <span>$${(item.price * item.qty).toFixed(2)}</span>
+                                <button class="btn-reduce" onclick="reduceItem('${name}', 'food')">−</button>
+                            </div>
+                        </div>`;
+                });
+
+                document.getElementById('summary-total').innerText = order.total.toFixed(2);
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        function proceedToPayment() {
+            if (order.total <= 0) return alert("Your selection is empty!");
+            window.location.href = 'payment.html';
+        }
+
+        window.onload = fetchRooms;
+    </script>
+</body>
+</html>
