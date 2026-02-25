@@ -4,193 +4,344 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LABREEZPOINT HOTEL | Luxury & Dining</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --burgundy: #8B1A2B; 
             --lime-green: #32CD32; 
-            --off-white: #fdfdfd;
-            --dark-bg: #1a1a1a;
+            --off-white: #f8f9fa;
+            --dark-bg: #0f0f0f;
+            --glass: rgba(255, 255, 255, 0.1);
         }
 
-        body { margin: 0; font-family: 'Helvetica Neue', Arial, sans-serif; overflow-x: hidden; background-color: var(--off-white); }
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            font-family: 'Poppins', sans-serif; 
+            overflow-x: hidden; 
+            background-color: var(--off-white); 
+            color: #333;
+        }
 
-        /* Top Bar */
-        .top-info { background: #222; color: white; padding: 8px 60px; display: flex; justify-content: space-between; font-size: 12px; letter-spacing: 1px; }
+        /* --- SMOOTH SCROLLING --- */
+        html { scroll-behavior: smooth; }
 
-        /* Navigation */
+        /* --- TOP BAR --- */
+        .top-info { 
+            background: var(--dark-bg); 
+            color: rgba(255,255,255,0.7); 
+            padding: 10px 60px; 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 11px; 
+            text-transform: uppercase;
+            letter-spacing: 1.5px; 
+        }
+
+        /* --- MODERN NAVIGATION --- */
         nav {
-            background: var(--burgundy);
+            background: white;
             padding: 0 60px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 70px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            height: 85px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             position: sticky;
             top: 0;
             z-index: 1000;
         }
-        .logo-text { color: white; font-size: 22px; font-weight: bold; text-decoration: none; }
-        .logo-text span { color: var(--lime-green); }
+        .logo-text { 
+            font-family: 'Playfair Display', serif;
+            color: var(--dark-bg); 
+            font-size: 26px; 
+            font-weight: bold; 
+            text-decoration: none; 
+            letter-spacing: -1px;
+        }
+        .logo-text span { color: var(--burgundy); }
         
-        .nav-links { display: flex; gap: 25px; align-items: center; }
-        .nav-links a { color: white; text-decoration: none; text-transform: uppercase; font-size: 13px; font-weight: 600; transition: 0.3s; }
-        .nav-links a:hover { color: var(--lime-green); }
+        .nav-links { display: flex; gap: 35px; align-items: center; }
+        .nav-links a { 
+            color: var(--dark-bg); 
+            text-decoration: none; 
+            text-transform: uppercase; 
+            font-size: 12px; 
+            font-weight: 600; 
+            transition: 0.3s; 
+            letter-spacing: 1px;
+        }
+        .nav-links a:hover { color: var(--burgundy); }
 
-        /* Deliveries Button Styling */
         .btn-nav-order {
-            background: var(--lime-green);
-            color: #1a1a1a !important;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-weight: 800 !important;
-            transition: 0.3s ease-in-out;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background: var(--burgundy);
+            color: white !important;
+            padding: 12px 24px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(139, 26, 43, 0.3);
+        }
+
+        /* --- HERO PARALLAX SECTION --- */
+        .hero-container {
+            position: relative;
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
             display: flex;
             align-items: center;
-            gap: 8px;
-            position: relative;
-        }
-        .btn-nav-order:hover {
-            background: white;
-            transform: scale(1.05);
+            justify-content: center;
         }
 
-        /* Cart Badge */
-        #cart-count {
-            background: var(--burgundy);
+        .hero-bg-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 120%; 
+            z-index: 1;
+            will-change: transform;
+        }
+
+        .hero-slide {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            transform: scale(1.1); 
+        }
+        .hero-slide.active { opacity: 1; transform: scale(1); }
+
+        .hero-floating-card {
+            position: absolute;
+            bottom: 10%;
+            right: 10%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 15px;
             color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            display: none; /* Hidden if 0 */
+            z-index: 10;
+            animation: float 6s ease-in-out infinite;
         }
 
-        /* Hero Slider */
-        .hero-slider { position: relative; width: 100%; height: 80vh; overflow: hidden; background: #000; }
-        .hero-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.5s ease-in-out; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; }
-        .hero-slide.active { opacity: 1; }
-        .hero-slider::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 2; }
-        .hero-content { position: relative; z-index: 5; color: white; text-align: center; max-width: 800px; }
-        .hero-content p { font-size: 18px; color: var(--lime-green); font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 4px; }
-        .hero-content h1 { font-size: 55px; margin: 0; text-transform: uppercase; line-height: 1.1; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
 
-        /* Showcase Grid */
-        .showcase-section { padding: 100px 60px; text-align: center; }
-        .card-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 50px; max-width: 1200px; margin: 50px auto 0; }
-        .card { background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: 0.4s; position: relative; }
-        .card:hover { transform: translateY(-10px); }
-        .card img { width: 100%; height: 250px; object-fit: cover; }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));
+            z-index: 2;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 5;
+            color: white;
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .hero-content h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 75px;
+            line-height: 1;
+            margin-bottom: 30px;
+        }
+
+        /* --- FEATURE SECTION --- */
+        .showcase-section { padding: 120px 60px; }
+        .section-title {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+        .section-title h2 { 
+            font-family: 'Playfair Display', serif; 
+            font-size: 45px; 
+            margin: 0;
+        }
+
+        .card-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+            gap: 40px; 
+            max-width: 1300px; 
+            margin: 0 auto; 
+        }
+
+        .card { 
+            background: white; 
+            border-radius: 20px; 
+            overflow: hidden; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05); 
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            position: relative; 
+            border: 1px solid #eee;
+        }
+        .card:hover { transform: translateY(-15px); box-shadow: 0 30px 60px rgba(0,0,0,0.1); }
         
+        .card img { width: 100%; height: 300px; object-fit: cover; transition: 0.5s; }
+        .card:hover img { transform: scale(1.05); }
+
         .price-badge {
-            position: absolute; top: 15px; right: 15px; background: var(--burgundy); color: white;
-            padding: 8px 15px; border-radius: 5px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 10;
+            position: absolute; top: 20px; left: 20px; 
+            background: white; color: var(--dark-bg);
+            padding: 10px 20px; border-radius: 50px; font-weight: bold; 
+            z-index: 10; font-size: 14px;
         }
-        .old-price-front { text-decoration: line-through; font-size: 0.8rem; opacity: 0.8; margin-right: 5px; }
 
-        .card-content { padding: 25px; text-align: left; }
-        .card-content h3 { color: var(--burgundy); margin: 0 0 10px 0; font-size: 20px; text-transform: uppercase; }
-        .card-content p { color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+        .card-content { padding: 30px; }
+        .card-content h3 { font-family: 'Playfair Display', serif; font-size: 24px; margin: 10px 0; }
+        .btn-book { 
+            background: var(--dark-bg); 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            border-radius: 10px;
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            width: 100%; 
+        }
+        .btn-book:hover { background: var(--burgundy); transform: scale(1.02); }
 
-        .btn-book { background: var(--burgundy); color: white; border: none; padding: 12px 25px; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; width: 100%; }
-        .btn-book:hover { background: var(--lime-green); color: black; }
-
-        /* Footer Styles */
-        footer { background: var(--dark-bg); color: #ccc; padding: 60px 60px 20px; font-size: 14px; margin-top: 50px; }
-        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; border-bottom: 1px solid #333; padding-bottom: 40px; }
-        .footer-col h4 { color: white; margin-bottom: 20px; text-transform: uppercase; font-size: 16px; border-left: 3px solid var(--lime-green); padding-left: 10px; }
-        .footer-links { list-style: none; padding: 0; margin: 0; }
-        .footer-links li { margin-bottom: 12px; }
-        .footer-links a { color: #ccc; text-decoration: none; transition: 0.3s; }
-        .footer-links a:hover { color: var(--lime-green); padding-left: 5px; }
+        footer { background: var(--dark-bg); color: #888; padding: 100px 60px 30px; }
+        .footer-grid { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr 1fr 1.5fr; 
+            gap: 50px; 
+            max-width: 1300px; 
+            margin: 0 auto; 
+        }
+        .footer-col h4 { color: white; font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 25px; }
+        .footer-links { list-style: none; padding: 0; }
+        .footer-links li { margin-bottom: 15px; }
+        .footer-links a { color: #888; text-decoration: none; transition: 0.3s; }
+        .footer-links a:hover { color: white; }
 
         @media (max-width: 900px) {
-            .card-container { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .hero-content h1 { font-size: 45px; }
+            .top-info { display: none; }
             nav { padding: 0 20px; }
-            .nav-links { gap: 10px; }
-            .nav-links a { font-size: 11px; }
-            .btn-nav-order { padding: 8px 12px; }
         }
     </style>
 </head>
 <body>
 
     <div class="top-info">
-        <div>📍 Nairobi, Kenya - The Home of Elegance</div>
-        <div>📞 Reservations: +254 736 801 389</div>
+        <div>📍 Limuru Road, Nairobi, Kenya</div>
+        <div>📞 +254 736 801 389 | ✉️ info@labreezpoint.com</div>
     </div>
 
     <nav>
         <a href="index.html" class="logo-text">LA <span>BREEZE</span> POINT</a>
         <div class="nav-links">
-            <a href="index.html" style="color: var(--lime-green);">Home</a>
-            <a href="booking.html">Accommodation</a>
-            <a href="dining.html">Dining</a>
-            <a href="deliveries.html" class="btn-nav-order">
-                Deliveries <span id="cart-count">0</span>
-            </a>
+            <a href="index.html">Home</a>
+            <a href="booking.html">Stay</a>
+            <a href="dining.html">Eat</a>
+            <a href="deliveries.html" class="btn-nav-order">Deliveries <span id="cart-count">0</span></a>
             <a href="login.html">Login</a> 
         </div>
     </nav>
 
-    <div class="hero-slider">
-        <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=2070');">
-            <div class="hero-content">
-                <p>Your Journey Begins Here</p>
-                <h1>Experience Luxury & <br>Premium Comfort</h1>
+    <div class="hero-container">
+        <div class="hero-bg-wrapper" id="parallax-bg">
+            <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=2070');"></div>
+            <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?q=80&w=2080');"></div>
+            <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070');"></div>
+        </div>
+        
+        <div class="hero-overlay"></div>
+
+        <div class="hero-content">
+            <p style="letter-spacing: 5px; text-transform: uppercase; font-size: 14px; margin-bottom: 20px;">Welcome to the Pinnacle of Luxury</p>
+            <h1>Where Every Stay <br><i>Tells a Story</i></h1>
+            <div style="display: flex; gap: 20px; justify-content: center; margin-top: 40px;">
+                <button class="btn-book" style="width: 200px; background: white; color: black;" onclick="location.href='booking.html'">Explore Rooms</button>
+                <button class="btn-book" style="width: 200px; background: transparent; border: 1px solid white;" onclick="location.href='dining.html'">Reserve Table</button>
             </div>
+        </div>
+
+        <div class="hero-floating-card">
+            <span style="color: var(--lime-green); font-size: 20px;">★ ★ ★ ★ ★</span>
+            <p style="margin: 5px 0 0; font-size: 12px; font-weight: 600;">Voted Best Boutique <br>Hotel in Nairobi 2026</p>
         </div>
     </div>
 
     <section class="showcase-section">
-        <h2 style="color: var(--burgundy); font-size: 32px; margin-bottom: 10px; letter-spacing: 1px;">OUR SIGNATURE OFFERS</h2>
-        <div style="width: 60px; height: 3px; background: var(--lime-green); margin: 0 auto;"></div>
-        <div class="card-container" id="specialties-container"></div>
+        <div class="section-title">
+            <p style="color: var(--burgundy); font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 3px;">Our Specialties</p>
+            <h2>Signature Experiences</h2>
+        </div>
+        
+        <div class="card-container" id="specialties-container">
+            </div>
     </section>
 
     <footer>
         <div class="footer-grid">
             <div class="footer-col">
-                <h3 style="color: white; margin-top: 0;">LA <span style="color: var(--lime-green);">BREEZE</span> POINT</h3>
-                <p>Where luxury meets hospitality. Your premier destination in Nairobi.</p>
+                <a href="#" class="logo-text" style="color: white;">LA <span>BREEZE</span> POINT</a>
+                <p style="margin-top: 20px; line-height: 1.8;">Established with a vision to redefine African hospitality, we combine modern luxury with local warmth to create unforgettable moments.</p>
             </div>
             <div class="footer-col">
-                <h4>Quick Links</h4>
+                <h4>Navigation</h4>
                 <ul class="footer-links">
-                    <li><a href="booking.html">Accommodations</a></li>
-                    <li><a href="dining.html">Dining</a></li>
-                    <li><a href="login.html">Staff Login</a></li>
+                    <li><a href="booking.html">Suites</a></li>
+                    <li><a href="dining.html">Restaurant</a></li>
+                    <li><a href="deliveries.html">Food Delivery</a></li>
+                    <li><a href="login.html">Staff Portal</a></li>
                 </ul>
             </div>
             <div class="footer-col">
-                <h4>Contact Info</h4>
-                <p>📍 Limuru Road, Nairobi</p>
-                <p>📞 +254 736 801 389</p>
+                <h4>Support</h4>
+                <ul class="footer-links">
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Newsletter</h4>
+                <p>Subscribe for exclusive offers.</p>
+                <div style="display: flex; margin-top: 20px;">
+                    <input type="text" placeholder="Your Email" style="padding: 12px; border: none; border-radius: 5px 0 0 5px; width: 100%;">
+                    <button style="background: var(--burgundy); border: none; color: white; padding: 0 15px; border-radius: 0 5px 5px 0; cursor: pointer;">Go</button>
+                </div>
             </div>
         </div>
-        <div style="text-align: center; padding-top: 30px; font-size: 12px; color: #666;">
-            &copy; 2026 LABREEZPOINT HOTEL. All Rights Reserved.
+        <div style="text-align: center; padding-top: 80px; font-size: 11px; letter-spacing: 2px;">
+            &copy; 2026 LABREEZPOINT HOTEL. CRAFTED BY DEDALIUS.
         </div>
     </footer>
 
     <script>
-        function quickBook(type) {
-            if (type === 'room') {
-                window.location.href = 'booking.html'; 
-            } else {
-                window.location.href = 'dining.html'; 
-            }
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.hero-slide');
+        
+        function nextSlide() {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
         }
+        setInterval(nextSlide, 5000);
 
-        // Logic to update the badge count on the Deliveries button
+        window.addEventListener('scroll', function() {
+            const scrollValue = window.scrollY;
+            const parallaxBg = document.getElementById('parallax-bg');
+            parallaxBg.style.transform = `translateY(${scrollValue * 0.4}px)`;
+        });
+
         function updateCartBadge() {
             const order = JSON.parse(localStorage.getItem('currentOrder')) || { rooms: {}, foods: {} };
             const countDisplay = document.getElementById('cart-count');
-            
             let totalItems = 0;
             if(order.rooms) Object.values(order.rooms).forEach(item => totalItems += item.qty);
             if(order.foods) Object.values(order.foods).forEach(item => totalItems += item.qty);
-
             if (totalItems > 0) {
                 countDisplay.innerText = totalItems;
                 countDisplay.style.display = 'inline-block';
@@ -203,36 +354,36 @@
             try {
                 const response = await fetch("/api/services");
                 const services = await response.json();
-                
                 if (services && services.length > 0) {
                     const container = document.getElementById('specialties-container');
                     container.innerHTML = ""; 
-
                     services.forEach(item => {
                         const img = (item.photos && item.photos.length > 0) ? item.photos[0] : 'https://via.placeholder.com/400x300';
+                        
+                        // FIX: Logic to map database types to actual HTML filenames
+                        let targetPage = "dining.html"; 
+                        const typeLower = item.type ? item.type.toLowerCase() : "";
+                        if (typeLower.includes('accommodation') || typeLower.includes('room')) {
+                            targetPage = "booking.html";
+                        }
+
                         const card = document.createElement('div');
                         card.className = 'card';
-                        
                         card.innerHTML = `
-                            <div class="price-badge">
-                                ${item.oldPrice ? `<span class="old-price-front">$${item.oldPrice}</span>` : ''}
-                                $${item.price}
-                            </div>
+                            <div class="price-badge">KSH ${item.price}</div>
                             <img src="${img}" alt="${item.name}">
                             <div class="card-content">
-                                <span style="font-size: 10px; color: var(--lime-green); font-weight: bold; text-transform: uppercase;">${item.type}</span>
+                                <span style="color: var(--burgundy); font-size: 11px; font-weight: 700; text-transform: uppercase;">${item.type}</span>
                                 <h3>${item.name}</h3>
                                 <p>${item.details || 'Experience world-class quality and comfort.'}</p>
-                                <button class="btn-book" onclick="quickBook('${item.type}')">
-                                    Book Now
-                                </button>
+                                <button class="btn-book" onclick="location.href='${targetPage}'">Book Now</button>
                             </div>
                         `;
                         container.appendChild(card);
                     });
                 }
-            } catch (err) {
-                console.log("Error loading services.");
+            } catch (err) { 
+                console.log("Database connection error. Ensure your server is running."); 
             }
         }
 

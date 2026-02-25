@@ -45,9 +45,11 @@
             font-size: 1.1rem; font-weight: bold; border-radius: 5px; cursor: pointer; transition: 0.3s;
         }
         .btn-pay:hover { background: #6b1421; }
+        .btn-pay:disabled { background: #ccc; cursor: not-allowed; }
 
         .hidden { display: none; }
         .secure-note { text-align: center; font-size: 0.75rem; color: #888; margin-top: 15px; }
+        #timer { color: var(--burgundy); font-weight: bold; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -56,35 +58,42 @@
         <div class="price-display">Total Amount: <strong id="dispTotal">KSH 0</strong></div>
         
         <label>CHOOSE METHOD</label>
-        <div class="selector">
+        <div class="selector" id="methodSelector">
             <div class="select-btn mpesa-active" id="btnMpesa" onclick="setMethod('M-Pesa')">M-Pesa</div>
             <div class="select-btn" id="btnCash" onclick="setMethod('Cash')">Pay with Cash</div>
         </div>
 
-        <label>FULL NAME</label>
-        <input type="text" id="guestName" placeholder="Full Name">
-        
-        <label>EMAIL ADDRESS</label>
-        <input type="email" id="guestEmail" placeholder="guest@example.com">
+        <div id="formFields">
+            <label>FULL NAME</label>
+            <input type="text" id="guestName" placeholder="Full Name">
+            
+            <label>EMAIL ADDRESS</label>
+            <input type="email" id="guestEmail" placeholder="guest@example.com">
 
-        <div id="mpesaFields">
-            <label>M-PESA PHONE NUMBER</label>
-            <input type="tel" id="guestPhone" placeholder="0712345678">
-            <div class="mpesa-badge">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png" alt="M-Pesa">
-                <span>STK Push Prompt</span>
+            <div id="mpesaFields">
+                <label>M-PESA PHONE NUMBER</label>
+                <input type="tel" id="guestPhone" placeholder="0712345678">
+                <div class="mpesa-badge">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png" alt="M-Pesa">
+                    <span>STK Push Prompt</span>
+                </div>
             </div>
         </div>
 
         <button class="btn-pay" id="payBtn" onclick="processPayment()">Send Payment Prompt</button>
         
         <div class="secure-note" id="note">
-            🔒 Please wait for the M-Pesa PIN prompt on your phone.
+            🔒 Safe & Encrypted Transaction.
+        </div>
+        <div id="timerDisplay" class="hidden" style="text-align: center; margin-top: 10px;">
+            Please enter PIN: <span id="timer">90</span>s
         </div>
     </div>
 
     <script>
         let currentMethod = 'M-Pesa';
+        let pollInterval;
+        let countdownInterval;
         
         const total = localStorage.getItem('totalToPay') || 0;
         const currentOrder = JSON.parse(localStorage.getItem('currentOrder')) || {};
@@ -105,14 +114,12 @@
                 btnC.classList.remove('active');
                 payBtn.innerText = "Send M-Pesa Prompt";
                 payBtn.style.background = "#4FB548";
-                note.innerText = "🔒 Please wait for the M-Pesa PIN prompt on your phone.";
             } else {
                 mpesaFields.classList.add('hidden');
                 btnC.classList.add('active');
                 btnM.classList.remove('mpesa-active');
                 payBtn.innerText = "Record Cash Transaction";
                 payBtn.style.background = "#8B1A2B";
-                note.innerText = "✅ Order will be recorded as a Cash payment.";
             }
         }
 
@@ -137,53 +144,95 @@
             payBtn.disabled = true;
 
             try {
-                // 1. If M-Pesa, trigger the STK Push via backend
                 if (currentMethod === 'M-Pesa') {
                     const stkRes = await fetch('http://localhost:5000/api/mpesa/stkpush', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            phoneNumber: guestPhone,
-                            amount: Math.round(total) // Safaricom expects integers
-                        })
+                        body: JSON.stringify({ phoneNumber: guestPhone, amount: Math.round(total) })
                     });
 
-                    if (!stkRes.ok) throw new Error("M-Pesa prompt failed to send.");
-                }
+                    const stkData = await stkRes.json();
+                    if (!stkRes.ok) throw new Error("M-Pesa prompt failed.");
 
-                // 2. Save the booking in the Database
-                const bookingData = {
-                    guestName: guestName,
-                    guestEmail: guestEmail,
-                    guestPhone: currentMethod === 'M-Pesa' ? guestPhone : 'Cash Payment',
-                    paymentMethod: currentMethod,
-                    paymentStatus: currentMethod === 'Cash' ? "Completed" : "Pending M-Pesa PIN",
-                    orderDetails: currentOrder, 
-                    totalAmount: parseFloat(total),
-                    timestamp: new Date().toISOString()
-                };
-
-                const response = await fetch('http://localhost:5000/api/bookings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(bookingData)
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    localStorage.setItem('lastTransaction', JSON.stringify(result.booking));
-                    alert(currentMethod === 'M-Pesa' ? "Check your phone for the M-Pesa PIN prompt!" : "Order recorded successfully!");
-                    window.location.href = 'receipt.html';
+                    // Start Countdown & Polling
+                    startTracking(stkData.data.CheckoutRequestID, { guestName, guestEmail, guestPhone });
                 } else {
-                    throw new Error(result.error);
+                    // Direct Cash logic
+                    saveAndRedirect({ guestName, guestEmail, guestPhone, method: 'Cash' });
                 }
             } catch (error) {
-                console.error("Error:", error);
-                alert("Payment Error: " + error.message);
+                alert("Error: " + error.message);
                 payBtn.disabled = false;
-                payBtn.innerText = currentMethod === 'M-Pesa' ? "Send M-Pesa Prompt" : "Record Cash Transaction";
+                payBtn.innerText = "Retry Payment";
             }
+        }
+
+        function startTracking(checkoutID, userData) {
+            document.getElementById('timerDisplay').classList.remove('hidden');
+            document.getElementById('methodSelector').classList.add('hidden');
+            document.getElementById('formFields').classList.add('hidden');
+            document.getElementById('payBtn').innerText = "Waiting for PIN...";
+
+            let timeLeft = 90;
+            const timerElem = document.getElementById('timer');
+
+            // 1. Countdown Logic
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                timerElem.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    clearInterval(pollInterval);
+                    alert("Payment timed out. Please try again.");
+                    location.reload();
+                }
+            }, 1000);
+
+            // 2. Polling Logic (Check status every 3 seconds)
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch('http://localhost:5000/api/mpesa/query', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ CheckoutRequestID: checkoutID })
+                    });
+                    const data = await res.json();
+
+                    if (data.ResultCode === "0") { // Success
+                        clearInterval(pollInterval);
+                        clearInterval(countdownInterval);
+                        saveAndRedirect({ ...userData, method: 'M-Pesa' });
+                    } else if (data.ResultCode && data.ResultCode !== "999") { // Cancelled or Error
+                        clearInterval(pollInterval);
+                        clearInterval(countdownInterval);
+                        alert("Transaction Cancelled: " + data.ResultDesc);
+                        location.reload();
+                    }
+                } catch (e) { console.log("Checking..."); }
+            }, 3000);
+        }
+
+        async function saveAndRedirect(data) {
+            const bookingData = {
+                guestName: data.guestName,
+                guestEmail: data.guestEmail,
+                guestPhone: data.guestPhone,
+                paymentMethod: data.method,
+                paymentStatus: "Completed",
+                orderDetails: currentOrder, 
+                totalAmount: parseFloat(total),
+                timestamp: new Date().toISOString()
+            };
+
+            const response = await fetch('http://localhost:5000/api/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookingData)
+            });
+
+            const result = await response.json();
+            localStorage.setItem('lastTransaction', JSON.stringify(bookingData));
+            window.location.href = 'receipt.html';
         }
         
         window.onload = () => setMethod('M-Pesa');

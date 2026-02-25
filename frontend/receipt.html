@@ -39,7 +39,7 @@
         .no-print { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
         .btn { padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; font-family: sans-serif; font-weight: bold; }
         .btn-print { background: var(--burgundy); color: white; }
-        .btn-home { background: var(--dark); color: white; text-decoration: none; font-size: 13px; line-height: 24px; }
+        .btn-home { background: var(--dark); color: white; text-decoration: none; font-size: 13px; line-height: 24px; text-align: center; display: inline-block; width: 120px; }
 
         @media print {
             body { background: white; padding: 0; }
@@ -55,7 +55,7 @@
             <div class="header">
                 <h2>LA BREEZE POINT</h2>
                 <p>Nairobi, Kenya</p>
-                <p>Tel: +254 700 000 000</p>
+                <p>Tel: +254 736 801 389</p>
             </div>
 
             <div class="details-row"><span>Date:</span> <span id="date">--/--/----</span></div>
@@ -97,7 +97,7 @@
 
     <script>
     window.onload = function() {
-        // MATCHED KEY: changed from 'lastTransaction' to 'lastReceipt'
+        // MATCHED KEY: Must match the key saved in payment page
         const txData = JSON.parse(localStorage.getItem('lastReceipt'));
         
         if (!txData) {
@@ -106,46 +106,48 @@
             return;
         }
 
-        // Fill Header Details
-        // Check if date exists, otherwise use current date
+        // 1. Header Details
         document.getElementById('date').innerText = txData.date || new Date().toLocaleString();
-        
-        // Handle Receipt ID: use txId from localStorage
-        const displayId = txData.transactionId || "LB" + Math.floor(Math.random() * 1000000);
-        document.getElementById('receiptId').innerText = "#" + displayId;
-        
+        document.getElementById('receiptId').innerText = "#" + (txData.transactionId || "000000");
         document.getElementById('custName').innerText = txData.name || "Valued Customer";
-        document.getElementById('payMethod').innerText = txData.method || "Paid";
+        document.getElementById('payMethod').innerText = txData.method || "Processed";
         
-        // Format the total with commas (e.g., 1,000.00)
+        // 2. Format Total
         const totalAmount = parseFloat(txData.amount) || 0;
         document.getElementById('grandTotal').innerText = "KSH " + totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2});
 
-        // Fill Items Table
+        // 3. Fill Items Table
         const itemsBody = document.getElementById('itemsBody');
-        const items = txData.items; // This is the object containing foods
+        const items = txData.items; 
 
         let itemsHtml = '';
+        
+        // Logical check for rooms/food object structure
         if (items && Object.keys(items).length > 0) {
             for (const [name, data] of Object.entries(items)) {
+                const qty = data.qty || 1;
+                const price = data.price || 0;
                 itemsHtml += `
                     <tr>
                         <td>${name}</td>
-                        <td style="text-align: center;">${data.qty}</td>
-                        <td style="text-align: right;">${(data.price * data.qty).toLocaleString()}</td>
+                        <td style="text-align: center;">${qty}</td>
+                        <td style="text-align: right;">${(price * qty).toLocaleString()}</td>
                     </tr>
                 `;
             }
         } else {
-            itemsHtml = '<tr><td colspan="3" style="text-align:center;">Order processed</td></tr>';
+            // Fallback if item details are missing
+            itemsHtml = `
+                <tr>
+                    <td>Hotel Service / Booking</td>
+                    <td style="text-align: center;">1</td>
+                    <td style="text-align: right;">${totalAmount.toLocaleString()}</td>
+                </tr>
+            `;
         }
         
         itemsBody.innerHTML = itemsHtml;
-
-        // Clean up: Optional - remove receipt from storage after 5 minutes
-        // so it doesn't show old receipts next time
-        // setTimeout(() => localStorage.removeItem('lastReceipt'), 300000);
     };
-</script>
+    </script>
 </body>
 </html>
