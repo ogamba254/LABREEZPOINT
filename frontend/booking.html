@@ -90,7 +90,7 @@
 
         async function fetchRooms() {
             try {
-                const response = await fetch('/api/services');
+                const response = await fetch(`${API_URL}/api/services`);
                 const services = await response.json();
                 const displayArea = document.getElementById('room-display-area');
                 displayArea.innerHTML = '';
