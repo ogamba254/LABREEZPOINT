@@ -352,7 +352,7 @@
 
         async function loadLiveServices() {
             try {
-                const response = await fetch("/api/services");
+                const response = await fetch(`${API_URL}/api/services`);
                 const services = await response.json();
                 if (services && services.length > 0) {
                     const container = document.getElementById('specialties-container');
