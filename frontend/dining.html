@@ -89,7 +89,7 @@
 
         async function fetchMenu() {
             try {
-                const response = await fetch('/api/services');
+                const response = await fetch(`${API_URL}/api/services`);
                 const services = await response.json();
                 const menuArea = document.getElementById('menu-display-area');
                 menuArea.innerHTML = '';

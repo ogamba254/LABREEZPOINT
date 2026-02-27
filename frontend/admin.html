@@ -160,7 +160,7 @@
 
     async function loadServices() {
         try {
-            const res = await fetch('/api/services');
+            const response = await fetch(`${API_URL}/api/services`);
             const services = await res.json();
             const tbody = document.getElementById('serviceTableBody');
             

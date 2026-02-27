@@ -86,7 +86,7 @@
         <button class="btn-login" onclick="handleLogin()">Sign In</button>
         <p class="footer-text">Unauthorized access is prohibited.</p>
     </div>
-<script src="config.js"></script>
+
     <script>
         function togglePassword() {
             const passwordInput = document.getElementById('password');
@@ -112,7 +112,7 @@
 
             try {
                 // FIXED: Changed endpoint from '/api/auth/login' to '/api/admin-login'
-                const response = await fetch('/api/admin-login', {
+                const response = await fetch(`${API_URL}/api/services`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: user, password: pass })
