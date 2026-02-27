@@ -23,16 +23,12 @@
         .slider-img { width: 100%; height: 100%; object-fit: cover; position: absolute; opacity: 0; transition: opacity 0.5s ease; }
         .slider-img.active { opacity: 1; }
         
-        .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 10px; cursor: pointer; z-index: 2; font-weight: bold; }
-        .btn-prev { left: 0; }
-        .btn-next { right: 0; }
-
         .room-info { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
         .room-info h3 { margin: 0; color: var(--burgundy); text-transform: capitalize; }
         
         .room-details { font-size: 0.9rem; color: #666; margin: 15px 0; line-height: 1.4; }
         .price-wrapper { margin-bottom: 20px; }
-        .room-price { font-size: 26px; font-weight: bold; color: var(--dark-bg); }
+        .room-price { font-size: 24px; font-weight: bold; color: var(--dark-bg); }
 
         .btn-select { background: var(--burgundy); color: white; border: none; padding: 14px; width: 100%; cursor: pointer; font-weight: bold; text-transform: uppercase; margin-top: auto; transition: 0.3s; }
         .btn-select:hover { background: var(--lime-green); color: black; }
@@ -49,10 +45,7 @@
         .order-item { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #eee; }
         
         .item-qty-label { font-weight: bold; color: var(--burgundy); margin-right: 5px; }
-        
-        /* The "-" button style for consistency */
         .btn-reduce { background: #ff4444; color: white; border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-weight: bold; margin-left: 10px; font-size: 16px; line-height: 1; }
-        .btn-reduce:hover { background: #cc0000; }
         
         .total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; margin-top: 15px; color: #000; border-top: 2px solid #ddd; padding-top: 10px; }
         .btn-confirm { background: var(--lime-green); color: black; border: none; width: 100%; padding: 12px; font-weight: bold; cursor: pointer; margin-top: 15px; border-radius: 5px; text-transform: uppercase; }
@@ -77,13 +70,13 @@
         <div id="summary-items" class="summary-items-list"></div>
         <div class="total-row">
             <span>Total:</span>
-            <span>$<span id="summary-total">0.00</span></span>
+            <span>KSH <span id="summary-total">0.00</span></span>
         </div>
         <button class="btn-confirm" onclick="proceedToPayment()">Confirm & Pay Now</button>
     </div>
 
+    <script src="config.js"></script>
     <script>
-        // Initialize order and ensure child objects exist
         let order = JSON.parse(localStorage.getItem('currentOrder')) || { rooms: {}, foods: {}, total: 0 };
         if (!order.rooms) order.rooms = {};
         if (!order.foods) order.foods = {};
@@ -94,7 +87,17 @@
                 const services = await response.json();
                 const displayArea = document.getElementById('room-display-area');
                 displayArea.innerHTML = '';
-                const rooms = services.filter(s => s.type === 'room');
+
+                // UPDATED FILTER: Catch any case variation of 'room' or 'accommodation'
+                const rooms = services.filter(s => {
+                    const type = s.type.toLowerCase();
+                    return type.includes('room') || type.includes('accommodation');
+                });
+
+                if (rooms.length === 0) {
+                    displayArea.innerHTML = "<p style='text-align:center;'>No rooms found.</p>";
+                    return;
+                }
 
                 rooms.forEach((room, index) => {
                     const roomId = `room-${index}`;
@@ -107,13 +110,18 @@
                             <div class="room-info">
                                 <h3>${room.name}</h3>
                                 <p class="room-details">${room.details || 'Luxury sleeping area.'}</p>
-                                <div class="price-wrapper"><span class="room-price">$${room.price}</span></div>
+                                <div class="price-wrapper">
+                                    <span class="room-price">KSH ${room.price.toLocaleString()}</span>
+                                </div>
                                 <button class="btn-select" onclick="addItem('${room.name}', ${room.price})">Book Now</button>
                             </div>
                         </div>`;
                 });
                 updateSummaryDisplay();
-            } catch (err) { console.error("Database Error:", err); }
+            } catch (err) { 
+                console.error("Database Error:", err); 
+                document.getElementById('room-display-area').innerHTML = "<p>Connection error. Please try again later.</p>";
+            }
         }
 
         function addItem(name, price) {
@@ -155,33 +163,31 @@
             if (roomKeys.length > 0 || foodKeys.length > 0) {
                 box.style.display = 'block';
                 
-                // Render Rooms
                 roomKeys.forEach(name => {
                     const item = order.rooms[name];
                     container.innerHTML += `
                         <div class="order-item">
                             <div><span class="item-qty-label">${item.qty}x</span> ${name}</div>
                             <div style="display:flex; align-items:center;">
-                                <span>$${(item.price * item.qty).toFixed(2)}</span>
+                                <span>KSH ${(item.price * item.qty).toLocaleString()}</span>
                                 <button class="btn-reduce" onclick="reduceItem('${name}', 'room')">−</button>
                             </div>
                         </div>`;
                 });
 
-                // Render Food (if any from dining page)
                 foodKeys.forEach(name => {
                     const item = order.foods[name];
                     container.innerHTML += `
                         <div class="order-item" style="border-left: 3px solid var(--lime-green); padding-left: 8px;">
                             <div><span class="item-qty-label">${item.qty}x</span> ${name}</div>
                             <div style="display:flex; align-items:center;">
-                                <span>$${(item.price * item.qty).toFixed(2)}</span>
+                                <span>KSH ${(item.price * item.qty).toLocaleString()}</span>
                                 <button class="btn-reduce" onclick="reduceItem('${name}', 'food')">−</button>
                             </div>
                         </div>`;
                 });
 
-                document.getElementById('summary-total').innerText = order.total.toFixed(2);
+                document.getElementById('summary-total').innerText = order.total.toLocaleString(undefined, {minimumFractionDigits: 2});
             } else {
                 box.style.display = 'none';
             }
