@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Deliveries | LABREEZPOINT</title>
+    <script src="config.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         :root { --burgundy: #8B1A2B; --lime-green: #32CD32; --off-white: #fdfdfd; --dark-bg: #1a1a1a; }
@@ -118,248 +119,253 @@
         </div>
     </div>
 <script src="config.js"></script>
- <script>
-    let order = { foods: {}, total: 0 };
-    let paymentMethod = 'mpesa';
-    let pollingActive = false;
-    let countdownInterval;
-    let pollInterval;
+    <script>
+        let order = { foods: {}, total: 0 };
+        let paymentMethod = 'mpesa';
+        let pollingActive = false;
+        let countdownInterval;
+        let pollInterval;
 
-    // Initialize EmailJS
-    (function() { emailjs.init("YOUR_EMAILJS_PUBLIC_KEY"); })();
+        // Initialize EmailJS - REPLACE WITH YOUR KEYS
+        (function() { emailjs.init("YOUR_EMAILJS_PUBLIC_KEY"); })();
 
-    async function loadMenu() {
-        try {
-            const response = await fetch('/api/services');
-            const services = await response.json();
-            const menuArea = document.getElementById('menu-area');
-            const foods = services.filter(s => s.type === 'food');
-            menuArea.innerHTML = foods.map(item => `
-                <div class="food-card">
-                    <img src="${item.photos?.[0] || 'https://via.placeholder.com/300'}" alt="${item.name}">
-                    <div class="food-info">
-                        <h3>${item.name}</h3>
-                        <span class="food-price">KSH ${item.price}</span>
+        async function loadMenu() {
+            try {
+                // Point to Render Backend using API_URL from config.js
+                const response = await fetch(`${API_URL}/api/services`);
+                const services = await response.json();
+                const menuArea = document.getElementById('menu-area');
+                // Filter items typed as 'food'
+                const foods = services.filter(s => s.type && s.type.toLowerCase().includes('food'));
+                
+                if (foods.length === 0) {
+                    menuArea.innerHTML = "<p>No food items available at the moment.</p>";
+                    return;
+                }
+
+                menuArea.innerHTML = foods.map(item => `
+                    <div class="food-card">
+                        <img src="${item.photos?.[0] || 'https://via.placeholder.com/300'}" alt="${item.name}">
+                        <div class="food-info">
+                            <h3>${item.name}</h3>
+                            <span class="food-price">KSH ${item.price}</span>
+                        </div>
+                        <button class="btn-add-food" onclick="addToCart('${item.name}', ${item.price})">ADD TO TRAY</button>
                     </div>
-                    <button class="btn-add-food" onclick="addToCart('${item.name}', ${item.price})">ADD TO TRAY</button>
-                </div>
-            `).join('');
-        } catch (err) { console.error("Menu Load Error:", err); }
-    }
-
-    function addToCart(name, price) {
-        if (!order.foods[name]) {
-            order.foods[name] = { price: parseFloat(price), qty: 1 };
-        } else {
-            order.foods[name].qty += 1;
+                `).join('');
+            } catch (err) { 
+                console.error("Menu Load Error:", err); 
+                document.getElementById('menu-area').innerHTML = "<p>Error loading menu. Please try again later.</p>";
+            }
         }
-        updateUI();
-    }
 
-    function changeQty(name, delta) {
-        if (!order.foods[name]) return;
-        order.foods[name].qty += delta;
-        if (order.foods[name].qty <= 0) delete order.foods[name];
-        updateUI();
-    }
+        function addToCart(name, price) {
+            if (!order.foods[name]) {
+                order.foods[name] = { price: parseFloat(price), qty: 1 };
+            } else {
+                order.foods[name].qty += 1;
+            }
+            updateUI();
+        }
 
-    function setMethod(method, btn) {
-        paymentMethod = method;
-        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
+        function changeQty(name, delta) {
+            if (!order.foods[name]) return;
+            order.foods[name].qty += delta;
+            if (order.foods[name].qty <= 0) delete order.foods[name];
+            updateUI();
+        }
 
-    function updateUI() {
-        const preview = document.getElementById('cart-preview');
-        let html = ''; let total = 0;
-        Object.keys(order.foods).forEach(name => {
-            const item = order.foods[name];
-            const itemTotal = item.price * item.qty;
-            total += itemTotal;
-            html += `
-            <div class="cart-row">
-                <span class="cart-item-name">${name}</span>
-                <div class="qty-controls">
-                    <button class="qty-btn" onclick="changeQty('${name}', -1)">-</button>
-                    <span class="qty-num">${item.qty}</span>
-                    <button class="qty-btn" onclick="changeQty('${name}', 1)">+</button>
-                </div>
-                <span class="cart-item-total">KSH ${itemTotal.toFixed(2)}</span>
-            </div>`;
-        });
-        preview.innerHTML = html || '<p style="color:#777; text-align:center;">Tray is empty</p>';
-        document.getElementById('grand-total').innerText = `KSH ${total.toFixed(2)}`;
-        order.total = total;
-    }
+        function setMethod(method, btn) {
+            paymentMethod = method;
+            document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
 
-    async function initiateStkPush(details) {
-        try {
-            const response = await fetch('/api/mpesa/stkpush', {
+        function updateUI() {
+            const preview = document.getElementById('cart-preview');
+            let html = ''; let total = 0;
+            Object.keys(order.foods).forEach(name => {
+                const item = order.foods[name];
+                const itemTotal = item.price * item.qty;
+                total += itemTotal;
+                html += `
+                <div class="cart-row">
+                    <span class="cart-item-name">${name}</span>
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="changeQty('${name}', -1)">-</button>
+                        <span class="qty-num">${item.qty}</span>
+                        <button class="qty-btn" onclick="changeQty('${name}', 1)">+</button>
+                    </div>
+                    <span class="cart-item-total">KSH ${itemTotal.toFixed(2)}</span>
+                </div>`;
+            });
+            preview.innerHTML = html || '<p style="color:#777; text-align:center;">Tray is empty</p>';
+            document.getElementById('grand-total').innerText = `KSH ${total.toFixed(2)}`;
+            order.total = total;
+        }
+
+        async function initiateStkPush(details) {
+            try {
+                const response = await fetch(`${API_URL}/api/mpesa/stkpush`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phoneNumber: details.phone,
+                        amount: details.total
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.data.CheckoutRequestID) {
+                    const checkoutID = result.data.CheckoutRequestID;
+                    startPaymentMonitoring(checkoutID, details);
+                } else {
+                    throw new Error(result.message || "STK Push failed");
+                }
+            } catch (err) {
+                alert("M-Pesa Error: " + err.message);
+                resetSubmitBtn();
+            }
+        }
+
+        function startPaymentMonitoring(checkoutID, details) {
+            const btn = document.getElementById('submit-btn');
+            let timeLeft = 90; 
+            pollingActive = true;
+
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                btn.innerText = `CHECKING PIN (${timeLeft}s)`;
+                
+                if (timeLeft <= 0) {
+                    stopMonitoring();
+                    alert("Payment timed out. Redirecting home...");
+                    window.location.href = 'index.html';
+                }
+            }, 1000);
+
+            pollInterval = setInterval(async () => {
+                if (!pollingActive) return;
+
+                try {
+                    const res = await fetch(`${API_URL}/api/mpesa/query`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ CheckoutRequestID: checkoutID })
+                    });
+                    const data = await res.json();
+
+                    if (data.ResultCode == 0) { 
+                        stopMonitoring();
+                        handlePaymentSuccess(details, "Paid via M-Pesa");
+                    } 
+                    else if (data.ResultCode == 1032) { 
+                        stopMonitoring();
+                        alert("Payment cancelled on your phone.");
+                        resetSubmitBtn();
+                    }
+                } catch (err) {
+                    console.log("Waiting for user response...");
+                }
+            }, 4000); 
+        }
+
+        function stopMonitoring() {
+            pollingActive = false;
+            clearInterval(countdownInterval);
+            clearInterval(pollInterval);
+        }
+
+        function resetSubmitBtn() {
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = false;
+            btn.innerText = "Complete Order";
+        }
+
+        async function handlePaymentSuccess(details, status) {
+            try {
+                await recordOrder(details, status);
+                
+                const receiptInfo = {
+                    name: details.name,
+                    amount: details.total,
+                    method: status.includes("M-Pesa") ? "M-PESA" : "Cash",
+                    date: new Date().toLocaleString(),
+                    items: order.foods,
+                    transactionId: "LB" + Math.floor(Math.random() * 1000000)
+                };
+                localStorage.setItem('lastReceipt', JSON.stringify(receiptInfo));
+
+                sendOrderEmail(details, status).catch(e => console.error("Email Error:", e));
+
+                window.location.href = 'receipt.html';
+            } catch (err) {
+                console.error("Success Handler Error:", err);
+                window.location.href = 'receipt.html';
+            }
+        }
+
+        async function recordOrder(details, status) {
+            return fetch(`${API_URL}/api/bookings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    phoneNumber: details.phone,
-                    amount: details.total
+                    guestName: details.name,
+                    guestEmail: details.email,
+                    guestPhone: details.phone,
+                    paymentMethod: paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash',
+                    paymentStatus: status,
+                    totalAmount: details.total,
+                    orderDetails: order.foods,
+                    timestamp: new Date().toISOString()
                 })
             });
-
-            const result = await response.json();
-
-            if (response.ok && result.data.CheckoutRequestID) {
-                const checkoutID = result.data.CheckoutRequestID;
-                startPaymentMonitoring(checkoutID, details);
-            } else {
-                throw new Error(result.message || "STK Push failed");
-            }
-        } catch (err) {
-            alert("M-Pesa Error: " + err.message);
-            resetSubmitBtn();
         }
-    }
 
-    function startPaymentMonitoring(checkoutID, details) {
-        const btn = document.getElementById('submit-btn');
-        let timeLeft = 90; 
-        pollingActive = true;
+        function sendOrderEmail(details, method) {
+            return emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+                to_name: "Admin",
+                from_name: details.name,
+                cust_email: details.email,
+                cust_phone: details.phone,
+                delivery_address: details.address,
+                order_details: JSON.stringify(order.foods),
+                payment_method: method,
+                grand_total: "KSH " + details.total
+            });
+        }
 
-        countdownInterval = setInterval(() => {
-            timeLeft--;
-            btn.innerText = `CHECKING PIN (${timeLeft}s)`;
-            
-            if (timeLeft <= 0) {
-                stopMonitoring();
-                alert("Payment timed out. Redirecting home...");
-                window.location.href = 'index.html';
-            }
-        }, 1000);
-
-        pollInterval = setInterval(async () => {
-            if (!pollingActive) return;
-
-            try {
-                const res = await fetch('/api/mpesa/query', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ CheckoutRequestID: checkoutID })
-                });
-                const data = await res.json();
-                console.log("Polling Status:", data); // Debugging
-
-                if (data.ResultCode == 0) { // Success (Loose check for string or number)
-                    stopMonitoring();
-                    handlePaymentSuccess(details, "Paid via M-Pesa");
-                } 
-                else if (data.ResultCode == 1032) { // Cancelled
-                    stopMonitoring();
-                    alert("Payment cancelled on your phone.");
-                    resetSubmitBtn();
-                }
-            } catch (err) {
-                console.log("Waiting for user response...");
-            }
-        }, 4000); 
-    }
-
-    function stopMonitoring() {
-        pollingActive = false;
-        clearInterval(countdownInterval);
-        clearInterval(pollInterval);
-    }
-
-    function resetSubmitBtn() {
-        const btn = document.getElementById('submit-btn');
-        btn.disabled = false;
-        btn.innerText = "Complete Order";
-    }
-
-    async function handlePaymentSuccess(details, status) {
-        try {
-            // 1. Record Order in Database
-            await recordOrder(details, status);
-            
-            // 2. Prepare Receipt Info
-            const receiptInfo = {
-                name: details.name,
-                amount: details.total,
-                method: status.includes("M-Pesa") ? "M-PESA" : "Cash",
-                date: new Date().toLocaleString(),
-                items: order.foods,
-                transactionId: "LB" + Math.floor(Math.random() * 1000000)
+        function processOrder() {
+            const details = {
+                name: document.getElementById('cust-name').value,
+                phone: document.getElementById('cust-phone').value,
+                email: document.getElementById('cust-email').value,
+                address: document.getElementById('cust-address').value,
+                total: order.total
             };
-            localStorage.setItem('lastReceipt', JSON.stringify(receiptInfo));
 
-            // 3. Send Email (Non-blocking)
-            sendOrderEmail(details, status).catch(e => console.error("Email Error:", e));
+            if (!details.name || !details.phone || !details.email || !details.address) return alert("Please fill all fields!");
+            if (order.total <= 0) return alert("Select some food first!");
 
-            // 4. Redirect
-            window.location.href = 'receipt.html';
-        } catch (err) {
-            console.error("Success Handler Error:", err);
-            // Fallback redirect if everything crashes
-            window.location.href = 'receipt.html';
+            let cleanPhone = details.phone.replace(/\D/g, '');
+            if (cleanPhone.startsWith('0')) cleanPhone = '254' + cleanPhone.substring(1);
+            if (!cleanPhone.startsWith('254')) cleanPhone = '254' + cleanPhone;
+            details.phone = cleanPhone;
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+
+            if (paymentMethod === 'mpesa') {
+                btn.innerText = "SENDING PUSH...";
+                initiateStkPush(details);
+            } else {
+                btn.innerText = "SENDING ORDER...";
+                handlePaymentSuccess(details, "Pay on Delivery (Pending)");
+            }
         }
-    }
 
-    async function recordOrder(details, status) {
-        return fetch('/api/bookings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                guestName: details.name,
-                guestEmail: details.email,
-                guestPhone: details.phone,
-                paymentMethod: paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash',
-                paymentStatus: status,
-                totalAmount: details.total,
-                orderDetails: order.foods,
-                timestamp: new Date().toISOString()
-            })
-        });
-    }
-
-    function sendOrderEmail(details, method) {
-        return emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
-            to_name: "Admin",
-            from_name: details.name,
-            cust_email: details.email,
-            cust_phone: details.phone,
-            delivery_address: details.address,
-            order_details: JSON.stringify(order.foods),
-            payment_method: method,
-            grand_total: "KSH " + details.total
-        });
-    }
-
-    function processOrder() {
-        const details = {
-            name: document.getElementById('cust-name').value,
-            phone: document.getElementById('cust-phone').value,
-            email: document.getElementById('cust-email').value,
-            address: document.getElementById('cust-address').value,
-            total: order.total
-        };
-
-        if (!details.name || !details.phone || !details.email || !details.address) return alert("Please fill all fields!");
-        if (order.total <= 0) return alert("Select some food first!");
-
-        let cleanPhone = details.phone.replace(/\D/g, '');
-        if (cleanPhone.startsWith('0')) cleanPhone = '254' + cleanPhone.substring(1);
-        if (!cleanPhone.startsWith('254')) cleanPhone = '254' + cleanPhone;
-        details.phone = cleanPhone;
-
-        const btn = document.getElementById('submit-btn');
-        btn.disabled = true;
-
-        if (paymentMethod === 'mpesa') {
-            btn.innerText = "SENDING PUSH...";
-            initiateStkPush(details);
-        } else {
-            btn.innerText = "SENDING ORDER...";
-            handlePaymentSuccess(details, "Pay on Delivery (Pending)");
-        }
-    }
-
-    window.onload = loadMenu;
-</script>
+        window.onload = loadMenu;
+    </script>
 </body>
 </html>
