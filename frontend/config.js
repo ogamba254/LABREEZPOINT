@@ -1,2 +1,4 @@
-// config.js
-const API_URL = "https://labreezpoint.onrender.com"; // Replace with your actual Render URL
+
+const API_URL = window.location.hostname === "localhost" 
+    ? "http://localhost:5000" 
+    : "https://labreezpoint.onrender.com";
