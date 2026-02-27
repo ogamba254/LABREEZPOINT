@@ -89,7 +89,8 @@
             Please enter PIN: <span id="timer">90</span>s
         </div>
     </div>
-<script src="config.js"></script>
+
+    <script src="config.js"></script>
     <script>
         let currentMethod = 'M-Pesa';
         let pollInterval;
@@ -104,7 +105,6 @@
             currentMethod = method;
             const mpesaFields = document.getElementById('mpesaFields');
             const payBtn = document.getElementById('payBtn');
-            const note = document.getElementById('note');
             const btnM = document.getElementById('btnMpesa');
             const btnC = document.getElementById('btnCash');
 
@@ -145,19 +145,18 @@
 
             try {
                 if (currentMethod === 'M-Pesa') {
-                    const stkRes = await fetch('http://localhost:5000/api/mpesa/stkpush', {
+                    // UPDATED: Used API_URL from config.js
+                    const stkRes = await fetch(`${API_URL}/api/mpesa/stkpush`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ phoneNumber: guestPhone, amount: Math.round(total) })
                     });
 
                     const stkData = await stkRes.json();
-                    if (!stkRes.ok) throw new Error("M-Pesa prompt failed.");
+                    if (!stkRes.ok) throw new Error(stkData.message || "M-Pesa prompt failed.");
 
-                    // Start Countdown & Polling
                     startTracking(stkData.data.CheckoutRequestID, { guestName, guestEmail, guestPhone });
                 } else {
-                    // Direct Cash logic
                     saveAndRedirect({ guestName, guestEmail, guestPhone, method: 'Cash' });
                 }
             } catch (error) {
@@ -176,39 +175,46 @@
             let timeLeft = 90;
             const timerElem = document.getElementById('timer');
 
-            // 1. Countdown Logic
             countdownInterval = setInterval(() => {
                 timeLeft--;
                 timerElem.innerText = timeLeft;
                 if (timeLeft <= 0) {
                     clearInterval(countdownInterval);
                     clearInterval(pollInterval);
-                    alert("Payment timed out. Please try again.");
+                    alert("Payment timed out. Please check your phone or try again.");
                     location.reload();
                 }
             }, 1000);
 
-            // 2. Polling Logic (Check status every 3 seconds)
             pollInterval = setInterval(async () => {
                 try {
-                    const res = await fetch('http://localhost:5000/api/mpesa/query', {
+                    // UPDATED: Used API_URL from config.js
+                    const res = await fetch(`${API_URL}/api/mpesa/query`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ CheckoutRequestID: checkoutID })
                     });
                     const data = await res.json();
 
-                    if (data.ResultCode === "0") { // Success
+                    // FIX: Only cancel if user actually clicks Cancel (1032) or other terminal errors
+                    // We ignore "In Progress" codes so the prompt doesn't close prematurely
+                    if (data.ResultCode === "0") { 
                         clearInterval(pollInterval);
                         clearInterval(countdownInterval);
                         saveAndRedirect({ ...userData, method: 'M-Pesa' });
-                    } else if (data.ResultCode && data.ResultCode !== "999") { // Cancelled or Error
+                    } else if (data.ResultCode === "1032") { 
                         clearInterval(pollInterval);
                         clearInterval(countdownInterval);
-                        alert("Transaction Cancelled: " + data.ResultDesc);
+                        alert("Transaction Cancelled by user.");
+                        location.reload();
+                    } else if (data.ResultCode && data.ResultCode !== "0" && data.ResultCode !== "999") {
+                        // Handle other specific failure codes like Insufficient Funds
+                        clearInterval(pollInterval);
+                        clearInterval(countdownInterval);
+                        alert("Payment Failed: " + (data.ResultDesc || "Unknown Error"));
                         location.reload();
                     }
-                } catch (e) { console.log("Checking..."); }
+                } catch (e) { console.log("Still waiting for Safaricom..."); }
             }, 3000);
         }
 
@@ -224,15 +230,21 @@
                 timestamp: new Date().toISOString()
             };
 
-            const response = await fetch('http://localhost:5000/api/bookings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookingData)
-            });
+            try {
+                // UPDATED: Used API_URL from config.js
+                const response = await fetch(`${API_URL}/api/bookings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bookingData)
+                });
 
-            const result = await response.json();
-            localStorage.setItem('lastTransaction', JSON.stringify(bookingData));
-            window.location.href = 'receipt.html';
+                if (!response.ok) throw new Error("Could not save booking");
+
+                localStorage.setItem('lastTransaction', JSON.stringify(bookingData));
+                window.location.href = 'receipt.html';
+            } catch (err) {
+                alert("Payment received, but there was an error saving your booking. Please contact support.");
+            }
         }
         
         window.onload = () => setMethod('M-Pesa');
