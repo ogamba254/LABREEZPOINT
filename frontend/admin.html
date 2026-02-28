@@ -48,6 +48,7 @@
         .filter-group { display: flex; flex-direction: column; gap: 5px; }
         .filter-group label { font-size: 0.75rem; font-weight: bold; color: #666; }
         .btn-print { background: #444; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-reset { background: #eee; color: #333; border: 1px solid #ccc; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
         /* Management Layout */
         .admin-panel { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 4px solid var(--burgundy); margin-bottom: 30px;}
@@ -152,6 +153,7 @@
                 <label>To Date</label>
                 <input type="date" id="dateTo" onchange="applyFilters()">
             </div>
+            <button class="btn-reset" onclick="resetFilters()">Clear</button>
             <button class="btn-print" onclick="window.print()" style="margin-left: auto;">🖨️ Print Report</button>
         </div>
 
@@ -220,7 +222,7 @@
             </table>
         </div>
 
-        <div class="table-container">
+        <div class="table-container" id="menu-inventory-table">
             <h2>Live Menu / Room Inventory</h2>
             <table>
                 <thead>
@@ -251,6 +253,19 @@
         function applyFilters() {
             const from = document.getElementById('dateFrom').value;
             const to = document.getElementById('dateTo').value;
+
+            // Logic to hide Inventory and Menu when filtering
+            const inventoryPanel = document.getElementById('inventory-section');
+            const menuTable = document.getElementById('menu-inventory-table');
+            
+            if (from || to) {
+                if(inventoryPanel) inventoryPanel.style.display = 'none';
+                if(menuTable) menuTable.style.display = 'none';
+            } else {
+                if(inventoryPanel) inventoryPanel.style.display = 'block';
+                if(menuTable) menuTable.style.display = 'block';
+            }
+
             const filtered = allBookings.filter(b => {
                 const bDate = new Date(b.timestamp).toISOString().split('T')[0];
                 if (from && bDate < from) return false;
@@ -259,6 +274,12 @@
             });
             renderTables(filtered);
             calculateStats(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            applyFilters();
         }
 
         function renderTables(bookings) {
@@ -286,7 +307,6 @@
             cashBody.innerHTML = bookings.filter(b => b.paymentMethod === 'Cash').map(generateRows).join('') || "<tr><td colspan='6' align='center'>No Cash records</td></tr>";
         }
 
-        // RECEIPT MODAL LOGIC
         function openReceipt(encodedData) {
             const b = JSON.parse(decodeURIComponent(encodedData));
             const meta = document.getElementById('receiptMeta');
@@ -300,7 +320,6 @@
             `;
 
             let rows = "";
-            // Handle if orderDetails exists (rooms/food)
             if(b.orderDetails) {
                 if(b.orderDetails.rooms) {
                     Object.entries(b.orderDetails.rooms).forEach(([name, d]) => {
@@ -327,14 +346,14 @@
             const receipt = document.getElementById('printableReceipt');
             html2canvas(receipt, { scale: 3 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'Receipt_LabreezPoint.png';
+                link.download = `Receipt_${Date.now()}.png`;
                 link.href = canvas.toDataURL();
                 link.click();
             });
         }
 
-        // Existing functions kept exactly the same
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+        
         function calculateStats(bookings) {
             let total = 0, mpesa = 0, cash = 0;
             bookings.forEach(b => {
@@ -346,6 +365,7 @@
             document.getElementById('mpesaRev').innerText = "KSH " + mpesa.toLocaleString();
             document.getElementById('cashRev').innerText = "KSH " + cash.toLocaleString();
         }
+
         async function loadServices() {
             try {
                 const response = await fetch(`${API_URL}/api/services`);
@@ -357,7 +377,9 @@
                 }).join('');
             } catch (err) { console.error(err); }
         }
+
         function previewImage(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = e => document.getElementById('preview').innerHTML = `<img src="${e.target.result}">`; reader.readAsDataURL(input.files[0]); } }
+        
         function editService(dataStr) {
             const s = JSON.parse(decodeURIComponent(dataStr));
             document.getElementById('serviceId').value = s._id;
@@ -372,6 +394,7 @@
             document.getElementById('cancelBtn').style.display = 'block';
             window.scrollTo({ top: document.getElementById('inventory-section').offsetTop, behavior: 'smooth' });
         }
+
         async function submitData() {
             const btn = document.getElementById('submitBtn');
             btn.innerText = "Saving...";
@@ -400,6 +423,7 @@
                 if (response.ok) location.reload();
             } catch (error) { alert("Error saving"); btn.innerText = "Save Service"; }
         }
+
         async function deleteService(id) { if(confirm("Delete item?")) { await fetch(`${API_URL}/api/services/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }); location.reload(); } }
         async function deleteBooking(id) { if(confirm("Delete record?")) { await fetch(`${API_URL}/api/bookings/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }); loadAllData(); } }
         function resetForm() { location.reload(); }
