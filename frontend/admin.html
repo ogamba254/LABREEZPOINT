@@ -20,7 +20,7 @@
             z-index: 1000; transition: transform 0.3s ease;
         }
         .sidebar h2 { color: var(--lime-green); border-bottom: 2px solid var(--burgundy); padding-bottom: 10px; }
-        .sidebar-link { display: block; color: white; text-decoration: none; padding: 15px 0; border-bottom: 1px solid #333; transition: 0.3s; cursor: pointer; }
+        .sidebar-link { display: block; color: white; text-decoration: none; padding: 15px 0; border-bottom: 1px solid #333; transition: 0.3s; cursor: pointer; font-size: 0.9rem; }
         .sidebar-link:hover { color: var(--lime-green); padding-left: 10px; }
 
         /* Mobile Header */
@@ -36,8 +36,9 @@
         /* Stat Cards */
         .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .card h3 { margin: 0; color: #777; font-size: 0.9rem; }
-        .card p { font-size: 1.8rem; font-weight: bold; margin: 10px 0 0; color: var(--burgundy); }
+        .card h3 { margin: 0; color: #777; font-size: 0.85rem; text-transform: uppercase; }
+        .card p { font-size: 1.5rem; font-weight: bold; margin: 10px 0 0; color: var(--burgundy); }
+        .insight-text { font-size: 0.9rem; color: #555; margin-top: 5px; font-weight: normal; }
 
         /* Filter Bar */
         .filter-bar { 
@@ -47,7 +48,6 @@
         }
         .filter-group { display: flex; flex-direction: column; gap: 5px; }
         .filter-group label { font-size: 0.75rem; font-weight: bold; color: #666; }
-        .btn-print { background: #444; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-reset { background: #eee; color: #333; border: 1px solid #ccc; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
         /* Management Layout */
@@ -75,14 +75,45 @@
         .btn-edit { background: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
         .guest-link { color: var(--burgundy); text-decoration: underline; cursor: pointer; font-weight: bold; }
 
-        /* Receipt Modal Styles */
+        /* Modal / Receipt Styles - FIXED */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 2000; display: none;
-            justify-content: center; align-items: center; overflow-y: auto; padding: 20px;
+            justify-content: center; align-items: center; overflow-y: auto; padding: 10px;
         }
-        .modal-content { background: white; padding: 20px; border-radius: 10px; max-width: 400px; width: 100%; position: relative; }
-        .receipt-paper { font-family: 'Courier New', monospace; color: #000; border: 1px solid #ddd; padding: 20px; }
+        .modal-content { background: white; padding: 20px; border-radius: 10px; max-width: 450px; width: 100%; position: relative; margin: auto; }
+        .receipt-paper { 
+            font-family: 'Courier New', monospace; 
+            color: #000; 
+            border: 1px solid #ddd; 
+            padding: 20px; 
+            background: #fff; 
+            width: 100%; 
+            box-sizing: border-box;
+        }
+        
+        .receipt-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px; 
+            table-layout: fixed; /* Ensures headers don't overflow */
+        }
+        .receipt-table th { 
+            background: #eee !important; 
+            border-bottom: 2px solid #000; 
+            padding: 8px 4px; 
+            font-size: 11px; 
+            text-align: left; 
+        }
+        .receipt-table td { 
+            padding: 8px 4px; 
+            font-size: 11px; 
+            border-bottom: 1px dashed #ccc; 
+            vertical-align: top; 
+            word-wrap: break-word; 
+            white-space: normal;
+        }
+
         .no-print-modal { margin-top: 15px; display: flex; gap: 10px; }
 
         @media (max-width: 992px) {
@@ -91,41 +122,9 @@
             .mobile-nav { display: flex; }
             .main-content { margin-left: 0; width: 100%; padding: 20px; }
         }
-
-        @media print {
-            .sidebar, .mobile-nav, .filter-bar, .admin-panel, .btn-delete, .btn-edit, .no-print-modal, .stat-cards { display: none !important; }
-            .modal-overlay { position: absolute; background: white; display: flex !important; }
-            .main-content { margin: 0; width: 100%; padding: 0; }
-        }
     </style>
 </head>
 <body>
-
-    <div id="receiptModal" class="modal-overlay">
-        <div class="modal-content">
-            <button onclick="closeReceipt()" style="position:absolute; right:10px; top:10px; border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
-            <div id="printableReceipt" class="receipt-paper">
-                <div style="text-align:center; border-bottom: 2px dashed #000; padding-bottom:10px; margin-bottom:10px;">
-                    <h2 style="margin:0; font-size:18px;">LA BREEZE POINT</h2>
-                    <p style="font-size:10px; margin:2px;">Nairobi, Kenya</p>
-                    <p style="font-size:10px; margin:2px;">Tel: +254 736 801 389</p>
-                </div>
-                <div id="receiptMeta" style="font-size:11px; margin-bottom:10px;"></div>
-                <table style="width:100%; font-size:11px; border-collapse:collapse;">
-                    <thead><tr style="border-bottom:1px solid #000;"><th align="left">ITEM</th><th align="center">QTY</th><th align="right">PRICE</th></tr></thead>
-                    <tbody id="receiptItems"></tbody>
-                </table>
-                <div style="border-top:2px dashed #000; margin-top:10px; padding-top:10px; font-weight:bold; display:flex; justify-content:space-between;">
-                    <span>TOTAL:</span><span id="receiptTotal"></span>
-                </div>
-                <p style="text-align:center; font-size:9px; margin-top:15px;">Thank you for visiting LabreezPoint!</p>
-            </div>
-            <div class="no-print-modal">
-                <button onclick="window.print()" style="flex:1; background:#444; color:white; padding:10px; border-radius:5px; cursor:pointer;">🖨️ Print</button>
-                <button onclick="downloadModalReceipt()" style="flex:1; background:var(--mpesa-green); color:white; padding:10px; border-radius:5px; cursor:pointer;">📥 Download</button>
-            </div>
-        </div>
-    </div>
 
     <header class="mobile-nav">
         <strong>LA BREEZE ADMIN</strong>
@@ -138,11 +137,29 @@
         <a href="#mpesa-section" class="sidebar-link" onclick="toggleSidebar()">M-Pesa Transactions</a>
         <a href="#cash-section" class="sidebar-link" onclick="toggleSidebar()">Cash Transactions</a>
         <a href="#inventory-section" class="sidebar-link" onclick="toggleSidebar()">Manage Inventory</a>
-        <div onclick="handleLogout()" class="sidebar-link" style="margin-top: 50px; color: var(--lime-green); font-weight: bold;">Logout</div>
+        <div onclick="handleLogout()" class="sidebar-link" style="margin-top: 50px; color: var(--lime-green); font-weight: bold; border-top:1px solid #444;">Logout</div>
     </div>
 
     <div class="main-content">
         <h1>Management Overview</h1>
+
+        <div class="stat-cards">
+            <div class="card">
+                <h3>Total Revenue</h3>
+                <p id="totalRev">KSH 0</p>
+                <div class="insight-text">M-Pesa: <span id="mpesaSub" style="color:var(--mpesa-green)">0</span> | Cash: <span id="cashSub">0</span></div>
+            </div>
+            <div class="card">
+                <h3>Top Room</h3>
+                <p id="topRoom" style="font-size:1.2rem;">-</p>
+                <div class="insight-text" id="topRoomCount">0 Bookings</div>
+            </div>
+            <div class="card">
+                <h3>Top Menu Item</h3>
+                <p id="topFood" style="font-size:1.2rem; color:var(--lime-green);">-</p>
+                <div class="insight-text" id="topFoodCount">0 Orders</div>
+            </div>
+        </div>
 
         <div class="filter-bar">
             <div class="filter-group">
@@ -154,13 +171,7 @@
                 <input type="date" id="dateTo" onchange="applyFilters()">
             </div>
             <button class="btn-reset" onclick="resetFilters()">Clear</button>
-            <button class="btn-print" onclick="window.print()" style="margin-left: auto;">🖨️ Print Report</button>
-        </div>
-
-        <div class="stat-cards">
-            <div class="card"><h3>Total Revenue</h3><p id="totalRev">KSH 0</p></div>
-            <div class="card"><h3>M-Pesa Total</h3><p id="mpesaRev" style="color: var(--mpesa-green)">KSH 0</p></div>
-            <div class="card"><h3>Cash in Hand</h3><p id="cashRev">KSH 0</p></div>
+            <button class="btn-update" onclick="openFullReport()" style="margin-left: auto; width: auto; padding: 10px 20px;">🖨️ Print Date Report</button>
         </div>
 
         <div class="admin-panel" id="inventory-section">
@@ -171,7 +182,7 @@
                     <label>Category</label>
                     <select id="type">
                         <option value="room">Accommodation</option>
-                        <option value="food">Dining</option>
+                        <option value="food">Dining / Menu</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -179,44 +190,40 @@
                     <input type="text" id="name" placeholder="e.g. Deluxe Suite">
                 </div>
                 <div class="form-group">
-                    <label>Current Price (KSH)</label>
+                    <label>Price (KSH)</label>
                     <input type="number" id="price">
-                </div>
-                <div class="form-group">
-                    <label>Old Price (Optional)</label>
-                    <input type="number" id="oldPrice">
                 </div>
             </div>
             <div class="form-group">
-                <label>Details / Description</label>
+                <label>Details</label>
                 <textarea id="details" rows="2"></textarea>
             </div>
             <div class="form-group">
-                <label>Image Source (URL or File)</label>
-                <input type="text" id="urlInput" placeholder="Paste image URL here..." style="margin-bottom: 10px;">
+                <label>Image Source</label>
+                <input type="text" id="urlInput" placeholder="Paste image URL here...">
+                <p style="text-align:center; margin:5px 0; font-size:0.7rem;">OR</p>
                 <input type="file" id="fileInput" accept="image/*" onchange="previewImage(this)">
             </div>
             <div class="img-preview" id="preview"><span>No image selected</span></div>
-            
-            <button class="btn-update" style="margin-top:15px;" id="submitBtn" onclick="submitData()">Save Service</button>
+            <button class="btn-update" style="margin-top:15px;" id="submitBtn" onclick="submitData()">Save Item</button>
             <button id="cancelBtn" style="display:none; margin-top:10px; width:100%; border:none; background:#ccc; padding:10px; border-radius:5px; cursor:pointer;" onclick="resetForm()">Cancel Edit</button>
         </div>
 
         <div class="table-container" id="mpesa-section">
-            <h2 class="mpesa-header">M-Pesa STK Transactions</h2>
-            <table id="mpesaTable">
+            <h2 style="color:var(--mpesa-green)">M-Pesa STK Transactions</h2>
+            <table>
                 <thead>
-                    <tr><th>Date & Time</th><th>Guest (Click to Receipt)</th><th>Phone</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+                    <tr><th>Date</th><th>Guest</th><th>Phone</th><th>Amount</th><th>Status</th><th>Action</th></tr>
                 </thead>
                 <tbody id="mpesaTableBody"></tbody>
             </table>
         </div>
 
         <div class="table-container" id="cash-section">
-            <h2 class="cash-header">Cash Transactions</h2>
-            <table id="cashTable">
+            <h2 style="color:var(--burgundy)">Cash Transactions</h2>
+            <table>
                 <thead>
-                    <tr><th>Date & Time</th><th>Guest (Click to Receipt)</th><th>Email</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+                    <tr><th>Date</th><th>Guest</th><th>Email</th><th>Amount</th><th>Status</th><th>Action</th></tr>
                 </thead>
                 <tbody id="cashTableBody"></tbody>
             </table>
@@ -232,39 +239,86 @@
             </table>
         </div>
     </div>
+
+    <div id="receiptModal" class="modal-overlay">
+        <div class="modal-content">
+            <button onclick="closeReceipt()" style="position:absolute; right:10px; top:5px; border:none; background:none; font-size:28px; cursor:pointer; color:#888;">&times;</button>
+            <div id="printableReceipt" class="receipt-paper">
+                <div style="text-align:center; border-bottom: 2px dashed #000; padding-bottom:10px; margin-bottom:10px;">
+                    <h2 style="margin:0; font-size:18px; letter-spacing: 1px;">LA BREEZE POINT</h2>
+                    <p id="reportTitle" style="font-size:12px; margin:5px; font-weight:bold; text-transform: uppercase;"></p>
+                    <p style="font-size:10px; margin:0;">Nairobi, Kenya</p>
+                </div>
+                <div id="receiptMeta" style="font-size:10px; line-height: 1.4; margin-bottom:10px; border-bottom: 1px solid #eee; padding-bottom: 5px;"></div>
+                <table class="receipt-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 55%;">DETAILS</th>
+                            <th style="width: 15%; text-align: center;">QTY</th>
+                            <th style="width: 30%; text-align: right;">AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="receiptItems"></tbody>
+                </table>
+                <div id="summaryArea" style="border-top:2px dashed #000; margin-top:10px; padding-top:10px; font-size: 12px;">
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size: 14px; margin-bottom: 5px;">
+                        <span>GRAND TOTAL:</span><span id="receiptTotal"></span>
+                    </div>
+                    <div id="paymentBreakdown" style="font-size: 10px; color: #444;"></div>
+                </div>
+                <div style="text-align:center; margin-top: 20px; font-size: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+                    ~ End of Report ~
+                </div>
+            </div>
+            <div class="no-print-modal">
+                <button onclick="window.print()" style="flex:1; background:#444; color:white; padding:12px; border-radius:5px; cursor:pointer; border:none; display: flex; align-items: center; justify-content: center; gap: 8px;">🖨️ Print</button>
+                <button onclick="downloadReceipt()" style="flex:1; background:var(--mpesa-green); color:white; padding:12px; border-radius:5px; cursor:pointer; border:none; font-weight:bold; display: flex; align-items: center; justify-content: center; gap: 8px;">📥 Download</button>
+            </div>
+        </div>
+    </div>
     
     <script src="config.js"></script>
     <script>
         let allBookings = [];
 
-        window.onload = function() {
-            loadAllData();
-            loadServices();
-        };
+        window.onload = function() { loadAllData(); loadServices(); };
 
         async function loadAllData() {
             try {
-                const response = await fetch(`${API_URL}/api/bookings`);
-                allBookings = await response.json();
+                const res = await fetch(`${API_URL}/api/bookings`);
+                allBookings = await res.json();
                 applyFilters();
-            } catch (err) { console.error(err); }
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadServices() {
+            try {
+                const res = await fetch(`${API_URL}/api/services`);
+                const services = await res.json();
+                const tbody = document.getElementById('serviceTableBody');
+                tbody.innerHTML = services.map(s => {
+                    const img = (s.photos && s.photos[0]) ? s.photos[0] : 'https://via.placeholder.com/50';
+                    return `<tr>
+                        <td><img src="${img}" width="50" height="40" style="object-fit:cover; border-radius:4px;"></td>
+                        <td><strong>${s.name}</strong></td>
+                        <td>${s.type.toUpperCase()}</td>
+                        <td>KSH ${s.price.toLocaleString()}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editService('${encodeURIComponent(JSON.stringify(s))}')">Edit</button>
+                            <button class="btn-delete" onclick="deleteService('${s._id}')">Del</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { console.error(e); }
         }
 
         function applyFilters() {
             const from = document.getElementById('dateFrom').value;
             const to = document.getElementById('dateTo').value;
-
-            // Logic to hide Inventory and Menu when filtering
-            const inventoryPanel = document.getElementById('inventory-section');
-            const menuTable = document.getElementById('menu-inventory-table');
             
-            if (from || to) {
-                if(inventoryPanel) inventoryPanel.style.display = 'none';
-                if(menuTable) menuTable.style.display = 'none';
-            } else {
-                if(inventoryPanel) inventoryPanel.style.display = 'block';
-                if(menuTable) menuTable.style.display = 'block';
-            }
+            const isFiltering = from || to;
+            document.getElementById('inventory-section').style.display = isFiltering ? 'none' : 'block';
+            document.getElementById('menu-inventory-table').style.display = isFiltering ? 'none' : 'block';
 
             const filtered = allBookings.filter(b => {
                 const bDate = new Date(b.timestamp).toISOString().split('T')[0];
@@ -274,12 +328,100 @@
             });
             renderTables(filtered);
             calculateStats(filtered);
+            return filtered;
         }
 
-        function resetFilters() {
-            document.getElementById('dateFrom').value = '';
-            document.getElementById('dateTo').value = '';
-            applyFilters();
+        // FIXED: Sales Report Logic
+        function openFullReport() {
+            const filteredData = applyFilters(); 
+            const from = document.getElementById('dateFrom').value || "All Time";
+            const to = document.getElementById('dateTo').value || "Present";
+            
+            document.getElementById('reportTitle').innerText = "FULL TRANSACTION REPORT";
+            document.getElementById('receiptMeta').innerHTML = `
+                <strong>PERIOD:</strong> ${from} to ${to}<br>
+                <strong>GENERATED:</strong> ${new Date().toLocaleString()}
+            `;
+            
+            let rows = "";
+            let totalMpesa = 0;
+            let totalCash = 0;
+
+            filteredData.forEach(b => {
+                const method = b.paymentMethod || 'Cash';
+                if(method === 'M-Pesa') totalMpesa += b.totalAmount;
+                else totalCash += b.totalAmount;
+
+                rows += `<tr>
+                    <td><strong>${b.guestName}</strong><br><small>${new Date(b.timestamp).toLocaleDateString()} - ${method}</small></td>
+                    <td align="center">1</td>
+                    <td align="right">${b.totalAmount.toLocaleString()}</td>
+                </tr>`;
+            });
+
+            if (filteredData.length === 0) {
+                rows = "<tr><td colspan='3' align='center'>No records found.</td></tr>";
+            }
+
+            document.getElementById('receiptItems').innerHTML = rows;
+            document.getElementById('receiptTotal').innerText = "KSH " + (totalMpesa + totalCash).toLocaleString();
+            document.getElementById('paymentBreakdown').innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-top:5px;"><span>M-Pesa:</span> <span>KSH ${totalMpesa.toLocaleString()}</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>Cash:</span> <span>KSH ${totalCash.toLocaleString()}</span></div>
+                <hr style="border:none; border-top:1px solid #eee; margin: 5px 0;">
+                <div style="display:flex; justify-content:space-between;"><span>Total Count:</span> <span>${filteredData.length} Guests</span></div>
+            `;
+            document.getElementById('receiptModal').style.display = 'flex';
+        }
+
+        function downloadReceipt() {
+            const receipt = document.getElementById('printableReceipt');
+            html2canvas(receipt, {
+                backgroundColor: "#ffffff",
+                scale: 3,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `LB_Report_${Date.now()}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        }
+
+        function calculateStats(bookings) {
+            let total = 0, mpesa = 0, cash = 0;
+            let roomsMap = {}, foodsMap = {};
+
+            bookings.forEach(b => {
+                total += b.totalAmount;
+                if(b.paymentMethod === 'M-Pesa') mpesa += b.totalAmount; else cash += b.totalAmount;
+
+                if(b.orderDetails) {
+                    if(b.orderDetails.rooms) {
+                        Object.entries(b.orderDetails.rooms).forEach(([name, data]) => {
+                            roomsMap[name] = (roomsMap[name] || 0) + data.qty;
+                        });
+                    }
+                    if(b.orderDetails.foods) {
+                        Object.entries(b.orderDetails.foods).forEach(([name, data]) => {
+                            foodsMap[name] = (foodsMap[name] || 0) + data.qty;
+                        });
+                    }
+                }
+            });
+
+            document.getElementById('totalRev').innerText = "KSH " + total.toLocaleString();
+            document.getElementById('mpesaSub').innerText = mpesa.toLocaleString();
+            document.getElementById('cashSub').innerText = cash.toLocaleString();
+
+            const getTop = (map) => Object.entries(map).sort((a,b) => b[1] - a[1])[0] || ["None", 0];
+            const topR = getTop(roomsMap);
+            const topF = getTop(foodsMap);
+
+            document.getElementById('topRoom').innerText = topR[0];
+            document.getElementById('topRoomCount').innerText = `${topR[1]} Bookings`;
+            document.getElementById('topFood').innerText = topF[0];
+            document.getElementById('topFoodCount').innerText = `${topF[1]} Orders`;
         }
 
         function renderTables(bookings) {
@@ -288,146 +430,86 @@
 
             const generateRows = (b) => {
                 const dt = new Date(b.timestamp);
-                const bookingData = encodeURIComponent(JSON.stringify(b));
-                return `
-                <tr>
-                    <td>
-                        <div style="font-weight:bold">${dt.toLocaleDateString()}</div>
-                        <div style="font-size:0.75rem; color:#666">${dt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-                    </td>
-                    <td><span class="guest-link" onclick="openReceipt('${bookingData}')">${b.guestName}</span></td>
+                const data = encodeURIComponent(JSON.stringify(b));
+                return `<tr>
+                    <td>${dt.toLocaleDateString()}<br><small>${dt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</small></td>
+                    <td><span class="guest-link" onclick="openReceipt('${data}')">${b.guestName}</span></td>
                     <td>${b.guestPhone || b.guestEmail || 'N/A'}</td>
                     <td>KSH ${b.totalAmount.toLocaleString()}</td>
-                    <td><span class="status-badge ${b.paymentStatus === 'Paid' ? 'status-paid' : 'status-pending'}">${b.paymentStatus === 'Paid' ? 'PAID' : 'PENDING'}</span></td>
+                    <td><span class="status-badge ${b.paymentStatus === 'Paid' ? 'status-paid' : (b.paymentMethod === 'M-Pesa' ? 'status-pending' : 'status-paid')}">${b.paymentStatus === 'Paid' ? 'PAID' : (b.paymentMethod === 'M-Pesa' ? 'M-PESA PAID' : 'PAID')}</span></td>
                     <td><button class="btn-delete" onclick="deleteBooking('${b._id}')">Del</button></td>
                 </tr>`;
             };
 
-            mpesaBody.innerHTML = bookings.filter(b => b.paymentMethod === 'M-Pesa').map(generateRows).join('') || "<tr><td colspan='6' align='center'>No M-Pesa records</td></tr>";
-            cashBody.innerHTML = bookings.filter(b => b.paymentMethod === 'Cash').map(generateRows).join('') || "<tr><td colspan='6' align='center'>No Cash records</td></tr>";
+            mpesaBody.innerHTML = bookings.filter(b => b.paymentMethod === 'M-Pesa').map(generateRows).join('') || "<tr><td colspan='6' align='center'>No records</td></tr>";
+            cashBody.innerHTML = bookings.filter(b => b.paymentMethod === 'Cash').map(generateRows).join('') || "<tr><td colspan='6' align='center'>No records</td></tr>";
         }
 
+        // FIXED: Single Receipt Breakdown Logic
         function openReceipt(encodedData) {
             const b = JSON.parse(decodeURIComponent(encodedData));
-            const meta = document.getElementById('receiptMeta');
-            const items = document.getElementById('receiptItems');
-            
-            meta.innerHTML = `
-                <div>DATE: ${new Date(b.timestamp).toLocaleString()}</div>
-                <div>ID: #${b._id.slice(-6).toUpperCase()}</div>
-                <div>GUEST: ${b.guestName}</div>
-                <div>METHOD: ${b.paymentMethod}</div>
+            document.getElementById('reportTitle').innerText = "PAYMENT RECEIPT";
+            document.getElementById('receiptMeta').innerHTML = `
+                <strong>DATE:</strong> ${new Date(b.timestamp).toLocaleString()}<br>
+                <strong>GUEST:</strong> ${b.guestName}<br>
+                <strong>METHOD:</strong> ${b.paymentMethod || 'M-Pesa'}
             `;
-
+            
             let rows = "";
             if(b.orderDetails) {
-                if(b.orderDetails.rooms) {
-                    Object.entries(b.orderDetails.rooms).forEach(([name, d]) => {
-                        rows += `<tr><td>ROOM: ${name}</td><td align="center">${d.qty}</td><td align="right">${(d.price * d.qty).toLocaleString()}</td></tr>`;
-                    });
-                }
-                if(b.orderDetails.foods) {
-                    Object.entries(b.orderDetails.foods).forEach(([name, d]) => {
-                        rows += `<tr><td>${name}</td><td align="center">${d.qty}</td><td align="right">${(d.price * d.qty).toLocaleString()}</td></tr>`;
-                    });
-                }
+                if(b.orderDetails.rooms) Object.entries(b.orderDetails.rooms).forEach(([n, d]) => rows += `<tr><td>Accommodation / ${n}</td><td align="center">${d.qty}</td><td align="right">${(d.price * d.qty).toLocaleString()}</td></tr>`);
+                if(b.orderDetails.foods) Object.entries(b.orderDetails.foods).forEach(([n, d]) => rows += `<tr><td>${n}</td><td align="center">${d.qty}</td><td align="right">${(d.price * d.qty).toLocaleString()}</td></tr>`);
             } else {
-                rows = `<tr><td>General Service</td><td align="center">1</td><td align="right">${b.totalAmount.toLocaleString()}</td></tr>`;
+                rows = `<tr><td>Accommodation / General Service</td><td align="center">1</td><td align="right">${b.totalAmount.toLocaleString()}</td></tr>`;
             }
 
-            items.innerHTML = rows;
+            document.getElementById('receiptItems').innerHTML = rows;
             document.getElementById('receiptTotal').innerText = "KSH " + b.totalAmount.toLocaleString();
+            document.getElementById('paymentBreakdown').innerHTML = ""; // Clear for single receipt
             document.getElementById('receiptModal').style.display = 'flex';
         }
 
-        function closeReceipt() { document.getElementById('receiptModal').style.display = 'none'; }
+        async function submitData() {
+            const payload = {
+                id: document.getElementById('serviceId').value,
+                name: document.getElementById('name').value,
+                price: document.getElementById('price').value,
+                details: document.getElementById('details').value,
+                type: document.getElementById('type').value
+            };
+            const file = document.getElementById('fileInput').files[0];
+            if(file) {
+                payload.photo = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(file); });
+            } else if(document.getElementById('urlInput').value) { payload.photo = document.getElementById('urlInput').value; }
 
-        function downloadModalReceipt() {
-            const receipt = document.getElementById('printableReceipt');
-            html2canvas(receipt, { scale: 3 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Receipt_${Date.now()}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
+            await fetch(`${API_URL}/api/update-service`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                body: JSON.stringify(payload)
             });
+            location.reload();
         }
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
-        
-        function calculateStats(bookings) {
-            let total = 0, mpesa = 0, cash = 0;
-            bookings.forEach(b => {
-                total += b.totalAmount;
-                if(b.paymentMethod === 'M-Pesa') mpesa += b.totalAmount;
-                else cash += b.totalAmount;
-            });
-            document.getElementById('totalRev').innerText = "KSH " + total.toLocaleString();
-            document.getElementById('mpesaRev').innerText = "KSH " + mpesa.toLocaleString();
-            document.getElementById('cashRev').innerText = "KSH " + cash.toLocaleString();
-        }
-
-        async function loadServices() {
-            try {
-                const response = await fetch(`${API_URL}/api/services`);
-                const services = await response.json();
-                const tbody = document.getElementById('serviceTableBody');
-                tbody.innerHTML = services.map(s => {
-                    const img = (s.photos && s.photos[0]) ? s.photos[0] : 'https://via.placeholder.com/50';
-                    return `<tr><td><img src="${img}" width="50" height="40" style="object-fit:cover;"></td><td><strong>${s.name}</strong></td><td>${s.type.toUpperCase()}</td><td><strong>KSH ${s.price}</strong></td><td><button class="btn-edit" onclick="editService('${encodeURIComponent(JSON.stringify(s))}')">Edit</button><button class="btn-delete" onclick="deleteService('${s._id}')">Del</button></td></tr>`
-                }).join('');
-            } catch (err) { console.error(err); }
-        }
-
-        function previewImage(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = e => document.getElementById('preview').innerHTML = `<img src="${e.target.result}">`; reader.readAsDataURL(input.files[0]); } }
-        
         function editService(dataStr) {
             const s = JSON.parse(decodeURIComponent(dataStr));
             document.getElementById('serviceId').value = s._id;
             document.getElementById('name').value = s.name;
             document.getElementById('price').value = s.price;
-            document.getElementById('oldPrice').value = s.oldPrice || '';
-            document.getElementById('details').value = s.details || '';
             document.getElementById('type').value = s.type;
-            document.getElementById('preview').innerHTML = s.photos ? `<img src="${s.photos[0]}">` : 'No Image';
-            document.getElementById('formTitle').innerText = "Editing: " + s.name;
-            document.getElementById('submitBtn').innerText = "Update Service";
+            document.getElementById('details').value = s.details || '';
+            document.getElementById('preview').innerHTML = `<img src="${s.photos[0]}">`;
+            document.getElementById('formTitle').innerText = "Edit Item";
             document.getElementById('cancelBtn').style.display = 'block';
-            window.scrollTo({ top: document.getElementById('inventory-section').offsetTop, behavior: 'smooth' });
-        }
-
-        async function submitData() {
-            const btn = document.getElementById('submitBtn');
-            btn.innerText = "Saving...";
-            const payload = {
-                id: document.getElementById('serviceId').value,
-                name: document.getElementById('name').value,
-                price: document.getElementById('price').value,
-                oldPrice: document.getElementById('oldPrice').value,
-                details: document.getElementById('details').value,
-                type: document.getElementById('type').value
-            };
-            const fileInput = document.getElementById('fileInput');
-            if (fileInput.files[0]) {
-                payload.photo = await new Promise(r => {
-                    const reader = new FileReader();
-                    reader.onload = () => r(reader.result);
-                    reader.readAsDataURL(fileInput.files[0]);
-                });
-            } else if (document.getElementById('urlInput').value) { payload.photo = document.getElementById('urlInput').value; }
-            try {
-                const response = await fetch(`${API_URL}/api/update-service`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                    body: JSON.stringify(payload)
-                });
-                if (response.ok) location.reload();
-            } catch (error) { alert("Error saving"); btn.innerText = "Save Service"; }
+            window.scrollTo({top:0, behavior:'smooth'});
         }
 
         async function deleteService(id) { if(confirm("Delete item?")) { await fetch(`${API_URL}/api/services/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }); location.reload(); } }
-        async function deleteBooking(id) { if(confirm("Delete record?")) { await fetch(`${API_URL}/api/bookings/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }); loadAllData(); } }
-        function resetForm() { location.reload(); }
-        function handleLogout() { localStorage.removeItem('adminToken'); window.location.href = 'index.html'; }
+        async function deleteBooking(id) { if(confirm("Delete record?")) { await fetch(`${API_URL}/api/bookings/${id}`, { method: 'DELETE' }); loadAllData(); } }
+        function previewImage(i) { if(i.files[0]) { const r=new FileReader(); r.onload=e=>document.getElementById('preview').innerHTML=`<img src="${e.target.result}">`; r.readAsDataURL(i.files[0]); } }
+        function closeReceipt() { document.getElementById('receiptModal').style.display='none'; }
+        function resetFilters() { document.getElementById('dateFrom').value=''; document.getElementById('dateTo').value=''; applyFilters(); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+        function handleLogout() { localStorage.removeItem('adminToken'); window.location.href='index.html'; }
     </script>
 </body>
 </html>
