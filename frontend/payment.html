@@ -12,8 +12,6 @@
         .border-burgundy { border-color: var(--burgundy); }
         .bg-mpesa { background-color: var(--mpesa-green); }
         .border-mpesa { border-color: var(--mpesa-green); }
-
-        /* Smooth Transition for the PIN prompt */
         #payment-status-box { transition: all 0.5s ease-in-out; }
     </style>
 </head>
@@ -57,34 +55,24 @@
                 <div id="mpesaFields">
                     <label class="text-[10px] font-bold text-gray-400 uppercase">M-Pesa Number</label>
                     <input type="tel" id="guestPhone" placeholder="07XX XXX XXX" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-mpesa/20 focus:border-mpesa transition-all">
-                    <div class="mt-3 flex items-center justify-center gap-2 text-[10px] text-green-600 font-bold bg-green-50 py-2 rounded-lg border border-green-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-                        </svg>
-                        SECURE STK PUSH ENCRYPTED
-                    </div>
                 </div>
             </div>
 
-            <div id="payment-status-box" class="hidden text-center py-8 animate-pulse">
+            <div id="payment-status-box" class="hidden text-center py-8">
                 <div class="inline-block p-6 rounded-full bg-burgundy/10 mb-4">
                     <svg class="animate-spin h-10 w-10 text-burgundy" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                 </div>
-                <h4 class="text-xl font-black text-gray-800">Check Your Phone</h4>
-                <p class="text-sm text-gray-500 mt-2 px-6">We've sent a PIN prompt to your M-Pesa. Please enter your PIN to complete the order.</p>
+                <h4 class="text-xl font-black text-gray-800">Verifying Payment</h4>
+                <p class="text-sm text-gray-500 mt-2 px-6">We are confirming your M-Pesa transaction. Please wait...</p>
                 <div class="mt-6 text-2xl font-mono font-bold text-burgundy" id="timer">90s</div>
             </div>
 
-            <button id="payBtn" onclick="processPayment()" class="w-full mt-8 bg-burgundy hover:bg-red-900 text-white font-black py-5 rounded-2xl transition transform active:scale-95 shadow-xl uppercase tracking-widest flex items-center justify-center gap-2">
-                <span>Send Payment Prompt</span>
+            <button id="payBtn" onclick="processPayment()" class="w-full mt-8 bg-burgundy hover:bg-red-900 text-white font-black py-5 rounded-2xl transition transform active:scale-95 shadow-xl uppercase tracking-widest">
+                Send Payment Prompt
             </button>
-            
-            <p id="note" class="text-center text-[10px] text-gray-400 mt-6 uppercase tracking-widest">
-                🔒 Protected by Safaricom SSL Encryption
-            </p>
         </div>
     </div>
 
@@ -92,7 +80,6 @@
     <script>
         let currentMethod = 'M-Pesa';
         let pollInterval, countdownInterval;
-        
         const total = localStorage.getItem('totalToPay') || 0;
         const currentOrder = JSON.parse(localStorage.getItem('currentOrder')) || {};
 
@@ -112,7 +99,7 @@
                 btnC.classList.replace('border-burgundy', 'border-gray-100');
                 btnC.classList.replace('text-burgundy', 'text-gray-500');
                 payBtn.innerText = "Send M-Pesa Prompt";
-                payBtn.className = payBtn.className.replace('bg-burgundy', 'bg-mpesa');
+                payBtn.style.backgroundColor = '#4FB548';
             } else {
                 mpesaFields.style.display = 'none';
                 btnC.classList.replace('border-gray-100', 'border-burgundy');
@@ -120,7 +107,7 @@
                 btnM.classList.replace('border-mpesa', 'border-gray-100');
                 btnM.classList.replace('text-green-700', 'text-gray-500');
                 payBtn.innerText = "Record Cash Transaction";
-                payBtn.className = payBtn.className.replace('bg-mpesa', 'bg-burgundy');
+                payBtn.style.backgroundColor = '#8B1A2B';
             }
         }
 
@@ -131,10 +118,10 @@
             const payBtn = document.getElementById('payBtn');
 
             if (!guestName || !guestEmail || (currentMethod === 'M-Pesa' && !guestPhone)) {
-                return alert("Please fill in all required fields.");
+                return alert("Please fill in all fields.");
             }
 
-            payBtn.innerText = "Processing...";
+            payBtn.innerText = "Initiating...";
             payBtn.disabled = true;
 
             if (currentMethod === 'M-Pesa') {
@@ -149,10 +136,10 @@
                         body: JSON.stringify({ phoneNumber: guestPhone, amount: Math.round(total) })
                     });
                     const stkData = await stkRes.json();
-                    if (!stkRes.ok) throw new Error(stkData.message || "M-Pesa prompt failed.");
+                    if (!stkRes.ok) throw new Error(stkData.message || "STK Push failed.");
                     startTracking(stkData.data.CheckoutRequestID, { guestName, guestEmail, guestPhone });
                 } catch (error) {
-                    alert("Error: " + error.message);
+                    alert(error.message);
                     payBtn.disabled = false;
                     payBtn.innerText = "Retry Payment";
                 }
@@ -168,14 +155,12 @@
             document.getElementById('payment-status-box').classList.remove('hidden');
 
             let timeLeft = 90;
-            const timerElem = document.getElementById('timer');
-
             countdownInterval = setInterval(() => {
                 timeLeft--;
-                timerElem.innerText = timeLeft + "s";
+                document.getElementById('timer').innerText = timeLeft + "s";
                 if (timeLeft <= 0) {
                     stopMonitoring();
-                    alert("Payment timed out. Try again.");
+                    alert("Timeout. Try again.");
                     location.reload();
                 }
             }, 1000);
@@ -189,16 +174,20 @@
                     });
                     const data = await res.json();
 
+                    // IF SUCCESS: Redirect immediately
                     if (data.ResultCode === "0") { 
+                        console.log("Payment Successful!");
                         stopMonitoring();
                         saveAndRedirect({ ...userData, method: 'M-Pesa' });
-                    } else if (data.ResultCode === "1032") { 
+                    } 
+                    // IF CANCELLED BY USER
+                    else if (data.ResultCode === "1032") { 
                         stopMonitoring();
-                        alert("Transaction Cancelled.");
+                        alert("Transaction cancelled by user.");
                         location.reload();
                     }
-                } catch (e) { console.log("Waiting..."); }
-            }, 3500);
+                } catch (e) { console.log("Waiting for PIN entry..."); }
+            }, 3000);
         }
 
         function stopMonitoring() {
@@ -215,19 +204,32 @@
                 paymentStatus: data.method === 'Cash' ? "Pay on Delivery" : "Paid",
                 orderDetails: currentOrder, 
                 totalAmount: parseFloat(total),
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                transactionId: Math.floor(100000 + Math.random() * 900000).toString()
             };
 
+            // CRITICAL: Save to LocalStorage FIRST before the fetch
+            // This ensures the receipt can load even if the server call is slow
+            localStorage.setItem('lastTransaction', JSON.stringify(bookingData));
+            localStorage.setItem('lastReceipt', JSON.stringify({
+                ...bookingData,
+                date: new Date().toLocaleString(),
+                amount: total,
+                items: currentOrder.foods || currentOrder
+            }));
+
             try {
-                const response = await fetch(`${API_URL}/api/bookings`, {
+                // Try to sync with cloud in the background
+                fetch(`${API_URL}/api/bookings`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(bookingData)
                 });
-                localStorage.setItem('lastTransaction', JSON.stringify(bookingData));
+                
+                // Redirect immediately regardless of cloud success
                 window.location.href = 'receipt.html';
             } catch (err) {
-                alert("Payment logged locally, but cloud sync failed. Our staff will verify manually.");
+                // Still redirect if cloud fails
                 window.location.href = 'receipt.html';
             }
         }
