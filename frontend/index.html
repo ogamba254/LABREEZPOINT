@@ -23,7 +23,6 @@
             color: #333;
         }
 
-        /* --- SMOOTH SCROLLING --- */
         html { scroll-behavior: smooth; }
 
         /* --- TOP BAR --- */
@@ -58,6 +57,7 @@
             font-weight: bold; 
             text-decoration: none; 
             letter-spacing: -1px;
+            z-index: 1001;
         }
         .logo-text span { color: var(--burgundy); }
         
@@ -79,6 +79,21 @@
             padding: 12px 24px;
             border-radius: 50px;
             box-shadow: 0 4px 15px rgba(139, 26, 43, 0.3);
+        }
+
+        /* Mobile Menu Toggle */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        .menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: var(--dark-bg);
+            transition: 0.3s;
         }
 
         /* --- HERO PARALLAX SECTION --- */
@@ -142,31 +157,40 @@
             color: white;
             text-align: center;
             max-width: 900px;
+            padding: 0 20px;
         }
 
         .hero-content h1 {
             font-family: 'Playfair Display', serif;
-            font-size: 75px;
-            line-height: 1;
+            font-size: clamp(40px, 8vw, 75px);
+            line-height: 1.1;
             margin-bottom: 30px;
         }
 
+        .hero-btns {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
         /* --- FEATURE SECTION --- */
-        .showcase-section { padding: 120px 60px; }
+        .showcase-section { padding: 80px 20px; }
         .section-title {
             text-align: center;
-            margin-bottom: 80px;
+            margin-bottom: 50px;
         }
         .section-title h2 { 
             font-family: 'Playfair Display', serif; 
-            font-size: 45px; 
+            font-size: clamp(30px, 5vw, 45px); 
             margin: 0;
         }
 
         .card-container { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
-            gap: 40px; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 30px; 
             max-width: 1300px; 
             margin: 0 auto; 
         }
@@ -176,56 +200,89 @@
             border-radius: 20px; 
             overflow: hidden; 
             box-shadow: 0 20px 40px rgba(0,0,0,0.05); 
-            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            transition: 0.4s ease; 
             position: relative; 
             border: 1px solid #eee;
         }
-        .card:hover { transform: translateY(-15px); box-shadow: 0 30px 60px rgba(0,0,0,0.1); }
+        .card:hover { transform: translateY(-10px); }
         
-        .card img { width: 100%; height: 300px; object-fit: cover; transition: 0.5s; }
-        .card:hover img { transform: scale(1.05); }
+        .card img { width: 100%; height: 250px; object-fit: cover; }
 
         .price-badge {
             position: absolute; top: 20px; left: 20px; 
             background: white; color: var(--dark-bg);
-            padding: 10px 20px; border-radius: 50px; font-weight: bold; 
-            z-index: 10; font-size: 14px;
+            padding: 8px 16px; border-radius: 50px; font-weight: bold; 
+            z-index: 10; font-size: 13px;
         }
 
-        .card-content { padding: 30px; }
-        .card-content h3 { font-family: 'Playfair Display', serif; font-size: 24px; margin: 10px 0; }
+        .card-content { padding: 25px; }
+        .card-content h3 { font-family: 'Playfair Display', serif; font-size: 22px; margin: 10px 0; }
         .btn-book { 
             background: var(--dark-bg); 
             color: white; 
             border: none; 
-            padding: 15px; 
+            padding: 14px; 
             border-radius: 10px;
             font-weight: 600; 
             cursor: pointer; 
             transition: 0.3s; 
             width: 100%; 
         }
-        .btn-book:hover { background: var(--burgundy); transform: scale(1.02); }
+        .btn-book:hover { background: var(--burgundy); }
 
-        footer { background: var(--dark-bg); color: #888; padding: 100px 60px 30px; }
+        /* --- FOOTER --- */
+        footer { background: var(--dark-bg); color: #888; padding: 60px 20px 30px; }
         .footer-grid { 
             display: grid; 
-            grid-template-columns: 2fr 1fr 1fr 1.5fr; 
-            gap: 50px; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 40px; 
             max-width: 1300px; 
             margin: 0 auto; 
         }
-        .footer-col h4 { color: white; font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 25px; }
+        .footer-col h4 { color: white; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 20px; }
         .footer-links { list-style: none; padding: 0; }
-        .footer-links li { margin-bottom: 15px; }
-        .footer-links a { color: #888; text-decoration: none; transition: 0.3s; }
+        .footer-links li { margin-bottom: 12px; }
+        .footer-links a { color: #888; text-decoration: none; transition: 0.3s; font-size: 14px; }
         .footer-links a:hover { color: white; }
 
-        @media (max-width: 900px) {
-            .footer-grid { grid-template-columns: 1fr; }
-            .hero-content h1 { font-size: 45px; }
+        /* --- MEDIA QUERIES --- */
+        @media (max-width: 992px) {
+            nav { padding: 0 30px; }
+            .top-info { padding: 10px 30px; }
+        }
+
+        @media (max-width: 768px) {
             .top-info { display: none; }
-            nav { padding: 0 20px; }
+            
+            .menu-toggle { display: flex; }
+
+            .nav-links {
+                position: fixed;
+                top: 85px;
+                left: -100%;
+                flex-direction: column;
+                background: white;
+                width: 100%;
+                height: calc(100vh - 85px);
+                gap: 20px;
+                padding: 40px;
+                transition: 0.4s;
+                text-align: center;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            }
+
+            .nav-links.active { left: 0; }
+
+            .hero-floating-card { display: none; }
+            
+            .footer-grid { grid-template-columns: 1fr; text-align: center; }
+            .footer-col div { justify-content: center; }
+        }
+
+        @media (max-width: 480px) {
+            .logo-text { font-size: 20px; }
+            .hero-btns .btn-book { width: 100%; }
+            .showcase-section { padding: 60px 15px; }
         }
     </style>
 </head>
@@ -238,7 +295,14 @@
 
     <nav>
         <a href="index.html" class="logo-text">LA <span>BREEZE</span> POINT</a>
-        <div class="nav-links">
+        
+        <div class="menu-toggle" id="mobile-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <div class="nav-links" id="nav-list">
             <a href="index.html">Home</a>
             <a href="booking.html">Stay</a>
             <a href="dining.html">Eat</a>
@@ -257,9 +321,9 @@
         <div class="hero-overlay"></div>
 
         <div class="hero-content">
-            <p style="letter-spacing: 5px; text-transform: uppercase; font-size: 14px; margin-bottom: 20px;">Welcome to the Pinnacle of Luxury</p>
+            <p style="letter-spacing: 5px; text-transform: uppercase; font-size: 12px; margin-bottom: 20px;">Welcome to the Pinnacle of Luxury</p>
             <h1>Where Every Stay <br><i>Tells a Story</i></h1>
-            <div style="display: flex; gap: 20px; justify-content: center; margin-top: 40px;">
+            <div class="hero-btns">
                 <button class="btn-book" style="width: 200px; background: white; color: black;" onclick="location.href='booking.html'">Explore Rooms</button>
                 <button class="btn-book" style="width: 200px; background: transparent; border: 1px solid white;" onclick="location.href='dining.html'">Reserve Table</button>
             </div>
@@ -273,7 +337,7 @@
 
     <section class="showcase-section">
         <div class="section-title">
-            <p style="color: var(--burgundy); font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 3px;">Our Specialties</p>
+            <p style="color: var(--burgundy); font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 3px;">Our Specialties</p>
             <h2>Signature Experiences</h2>
         </div>
         
@@ -285,7 +349,7 @@
         <div class="footer-grid">
             <div class="footer-col">
                 <a href="#" class="logo-text" style="color: white;">LA <span>BREEZE</span> POINT</a>
-                <p style="margin-top: 20px; line-height: 1.8;">Established with a vision to redefine African hospitality, we combine modern luxury with local warmth to create unforgettable moments.</p>
+                <p style="margin-top: 20px; line-height: 1.8; font-size: 14px;">Established with a vision to redefine African hospitality, we combine modern luxury with local warmth to create unforgettable moments.</p>
             </div>
             <div class="footer-col">
                 <h4>Navigation</h4>
@@ -307,19 +371,28 @@
             </div>
             <div class="footer-col">
                 <h4>Newsletter</h4>
-                <p>Subscribe for exclusive offers.</p>
+                <p style="font-size: 14px;">Subscribe for exclusive offers.</p>
                 <div style="display: flex; margin-top: 20px;">
                     <input type="text" placeholder="Your Email" style="padding: 12px; border: none; border-radius: 5px 0 0 5px; width: 100%;">
                     <button style="background: var(--burgundy); border: none; color: white; padding: 0 15px; border-radius: 0 5px 5px 0; cursor: pointer;">Go</button>
                 </div>
             </div>
         </div>
-        <div style="text-align: center; padding-top: 80px; font-size: 11px; letter-spacing: 2px;">
+        <div style="text-align: center; padding-top: 80px; font-size: 10px; letter-spacing: 2px;">
             &copy; 2026 LABREEZPOINT HOTEL. CRAFTED BY DEDALIUS.
         </div>
     </footer>
-<script src="config.js"></script>
+
+    <script src="config.js"></script>
     <script>
+        // Mobile Menu Logic
+        const menuToggle = document.getElementById('mobile-menu');
+        const navLinks = document.getElementById('nav-list');
+
+        menuToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
         let currentSlide = 0;
         const slides = document.querySelectorAll('.hero-slide');
         
@@ -333,7 +406,9 @@
         window.addEventListener('scroll', function() {
             const scrollValue = window.scrollY;
             const parallaxBg = document.getElementById('parallax-bg');
-            parallaxBg.style.transform = `translateY(${scrollValue * 0.4}px)`;
+            if (window.innerWidth > 768) {
+                parallaxBg.style.transform = `translateY(${scrollValue * 0.4}px)`;
+            }
         });
 
         function updateCartBadge() {
@@ -360,7 +435,6 @@
                     services.forEach(item => {
                         const img = (item.photos && item.photos.length > 0) ? item.photos[0] : 'https://via.placeholder.com/400x300';
                         
-                        // FIX: Logic to map database types to actual HTML filenames
                         let targetPage = "dining.html"; 
                         const typeLower = item.type ? item.type.toLowerCase() : "";
                         if (typeLower.includes('accommodation') || typeLower.includes('room')) {
@@ -375,7 +449,7 @@
                             <div class="card-content">
                                 <span style="color: var(--burgundy); font-size: 11px; font-weight: 700; text-transform: uppercase;">${item.type}</span>
                                 <h3>${item.name}</h3>
-                                <p>${item.details || 'Experience world-class quality and comfort.'}</p>
+                                <p style="font-size: 14px; color: #666;">${item.details || 'Experience world-class quality and comfort.'}</p>
                                 <button class="btn-book" onclick="location.href='${targetPage}'">Book Now</button>
                             </div>
                         `;
@@ -383,7 +457,7 @@
                     });
                 }
             } catch (err) { 
-                console.log("Database connection error. Ensure your server is running."); 
+                console.log("Database connection error."); 
             }
         }
 
@@ -391,7 +465,6 @@
             loadLiveServices();
             updateCartBadge();
         };
-        
     </script>
 </body>
 </html>
