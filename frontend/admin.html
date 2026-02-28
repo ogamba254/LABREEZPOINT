@@ -273,7 +273,7 @@
                     <td>${b.guestName}</td>
                     <td>${b.guestPhone || 'N/A'}</td>
                     <td>KSH ${b.totalAmount}</td>
-                    <td><span class="status-badge ${b.paymentStatus === 'Completed' ? 'status-paid' : 'status-pending'}">${b.paymentStatus}</span></td>
+                    <td><span class="status-badge ${b.paymentStatus === 'Paid' ? 'status-paid' : 'status-pending'}">${b.paymentStatus}</span></td>
                     <td><button class="btn-delete" onclick="deleteBooking('${b._id}')">Del</button></td>
                 </tr>`).join('') || "<tr><td colspan='6' style='text-align:center'>No records</td></tr>";
 
