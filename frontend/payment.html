@@ -65,8 +65,8 @@
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                 </div>
-                <h4 class="text-xl font-black text-gray-800">Verifying Payment</h4>
-                <p class="text-sm text-gray-500 mt-2 px-6">We are confirming your M-Pesa transaction. Please wait...</p>
+                <h4 class="text-xl font-black text-gray-800 italic">Check Your Phone</h4>
+                <p class="text-sm text-gray-500 mt-2 px-6">Please enter your M-Pesa PIN to complete the transaction.</p>
                 <div class="mt-6 text-2xl font-mono font-bold text-burgundy" id="timer">90s</div>
             </div>
 
@@ -160,7 +160,7 @@
                 document.getElementById('timer').innerText = timeLeft + "s";
                 if (timeLeft <= 0) {
                     stopMonitoring();
-                    alert("Timeout. Try again.");
+                    alert("Timeout. Please check your phone and try again.");
                     location.reload();
                 }
             }, 1000);
@@ -174,19 +174,24 @@
                     });
                     const data = await res.json();
 
-                    // IF SUCCESS: Redirect immediately
+                    // IF SUCCESS (0): Stop and redirect
                     if (data.ResultCode === "0") { 
-                        console.log("Payment Successful!");
                         stopMonitoring();
                         saveAndRedirect({ ...userData, method: 'M-Pesa' });
                     } 
-                    // IF CANCELLED BY USER
+                    // IF CANCELLED BY USER (1032): Stop and reset
                     else if (data.ResultCode === "1032") { 
                         stopMonitoring();
                         alert("Transaction cancelled by user.");
                         location.reload();
                     }
-                } catch (e) { console.log("Waiting for PIN entry..."); }
+                    // ELSE: Ignore internal Safaricom errors and continue polling
+                    else {
+                        console.log("Transaction still processing...");
+                    }
+                } catch (e) { 
+                    console.log("Waiting for PIN entry or Safaricom response..."); 
+                }
             }, 3000);
         }
 
@@ -208,8 +213,7 @@
                 transactionId: Math.floor(100000 + Math.random() * 900000).toString()
             };
 
-            // CRITICAL: Save to LocalStorage FIRST before the fetch
-            // This ensures the receipt can load even if the server call is slow
+            // SYNC LOCAL STORAGE FOR RECEIPT
             localStorage.setItem('lastTransaction', JSON.stringify(bookingData));
             localStorage.setItem('lastReceipt', JSON.stringify({
                 ...bookingData,
@@ -219,17 +223,16 @@
             }));
 
             try {
-                // Try to sync with cloud in the background
+                // Background cloud sync
                 fetch(`${API_URL}/api/bookings`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(bookingData)
                 });
                 
-                // Redirect immediately regardless of cloud success
+                // Immediate redirect
                 window.location.href = 'receipt.html';
             } catch (err) {
-                // Still redirect if cloud fails
                 window.location.href = 'receipt.html';
             }
         }
