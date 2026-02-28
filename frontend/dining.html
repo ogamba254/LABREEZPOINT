@@ -4,88 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dining | LABREEZPOINT HOTEL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --burgundy: #8B1A2B; --lime-green: #32CD32; --off-white: #fdfdfd; --dark-bg: #1a1a1a; }
-        body { margin: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--off-white); padding-bottom: 120px; }
-        
-        nav { background: var(--burgundy); padding: 0 60px; display: flex; justify-content: space-between; align-items: center; height: 70px; }
-        .logo-text { color: white; font-size: 22px; font-weight: bold; text-decoration: none; }
-        .logo-text span { color: var(--lime-green); }
-        .nav-links a { color: white; text-decoration: none; text-transform: uppercase; font-size: 13px; margin-left: 20px; }
+        :root { --burgundy: #8B1A2B; --lime-green: #32CD32; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; }
+        .bg-burgundy { background-color: var(--burgundy); }
+        .text-lime { color: var(--lime-green); }
+        .border-lime { border-color: var(--lime-green); }
+        .bg-lime { background-color: var(--lime-green); }
 
-        .page-header { background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070'); background-size: cover; height: 30vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
+        /* Custom Scrollbar */
+        .cart-scroll::-webkit-scrollbar { width: 4px; }
+        .cart-scroll::-webkit-scrollbar-thumb { background: var(--burgundy); border-radius: 10px; }
 
-        .menu-grid { padding: 60px; max-width: 1200px; margin: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-        
-        .food-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; }
-        .slider-container { position: relative; height: 220px; background: #eee; overflow: hidden; }
-        .slider-img { width: 100%; height: 100%; object-fit: cover; position: absolute; opacity: 0; transition: opacity 0.5s ease; }
-        .slider-img.active { opacity: 1; }
-        
-        .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 8px; cursor: pointer; z-index: 2; }
-        .btn-prev { left: 0; }
-        .btn-next { right: 0; }
-
-        .food-info { padding: 20px; text-align: center; flex-grow: 1; }
-        .food-info h3 { margin: 0; color: var(--burgundy); text-transform: capitalize; }
-        .food-details { font-size: 0.85rem; color: #666; margin: 10px 0; min-height: 40px; line-height: 1.4; }
-        
-        .price-container { margin: 10px 0; }
-        .current-price { font-weight: bold; font-size: 1.3rem; color: var(--dark-bg); }
-        
-        .btn-add { background: var(--burgundy); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-add:hover { background: var(--lime-green); color: black; }
-
-        /* Order Summary Styles */
-        .cart-summary { position: fixed; bottom: 20px; right: 20px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); border-top: 5px solid var(--burgundy); width: 320px; z-index: 1000; }
-        .cart-summary h3 { margin-top: 0; font-size: 1.1rem; color: var(--burgundy); border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        
-        .summary-scroll { max-height: 250px; overflow-y: auto; margin-bottom: 10px; }
-        .order-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #eee; }
-        .item-qty-label { color: var(--burgundy); font-weight: bold; margin-right: 5px; }
-        
-        /* The "-" button style */
-        .btn-reduce { background: #ff4444; color: white; border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-weight: bold; margin-left: 10px; font-size: 16px; line-height: 1; }
-        .btn-reduce:hover { background: #cc0000; }
-        
-        .room-section { background: #f9f9f9; padding: 10px; border-radius: 4px; margin-bottom: 10px; border-left: 4px solid var(--lime-green); font-size: 0.9rem; }
-        .total-line { border-top: 2px solid #ddd; padding-top: 10px; font-weight: bold; font-size: 1.2rem; display: flex; justify-content: space-between; }
-        .btn-pay { background: var(--lime-green); color: black; border: none; width: 100%; padding: 12px; font-weight: bold; cursor: pointer; margin-top: 15px; border-radius: 5px; text-transform: uppercase; }
+        /* Hide cart on small screens until toggled */
+        @media (max-width: 1024px) {
+            .cart-sidebar {
+                position: fixed;
+                bottom: 0;
+                right: 0;
+                left: 0;
+                width: 100%;
+                z-index: 1000;
+                transform: translateY(calc(100% - 60px));
+                transition: transform 0.3s ease-in-out;
+            }
+            .cart-sidebar.open { transform: translateY(0); }
+            .cart-handle { display: flex !important; }
+        }
     </style>
 </head>
-<body>
-    <nav>
-        <a href="index.html" class="logo-text">LA <span>BREEZE</span> POINT</a>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="booking.html">Accommodation</a>
-            <a href="dining.html" style="color: var(--lime-green);">Dining</a>
+<body class="bg-gray-50 pb-20 lg:pb-0">
+
+    <nav class="bg-burgundy px-4 lg:px-12 py-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
+        <a href="index.html" class="text-white text-xl font-bold tracking-tighter">
+            LA <span class="text-lime">BREEZE</span> POINT
+        </a>
+        <div class="hidden md:flex space-x-6">
+            <a href="index.html" class="text-white text-xs uppercase font-bold hover:text-lime transition">Home</a>
+            <a href="booking.html" class="text-white text-xs uppercase font-bold hover:text-lime transition">Rooms</a>
+            <a href="dining.html" class="text-lime text-xs uppercase font-bold border-b-2 border-lime">Dining</a>
         </div>
+        <div class="md:hidden text-white text-2xl">☰</div>
     </nav>
     
-    <header class="page-header"><h1>Culinary Delights</h1></header>
-
-    <div class="menu-grid" id="menu-display-area"></div>
-
-    <div class="cart-summary" id="cart-summary">
-        <h3>Your Selection</h3>
-        <div class="summary-scroll">
-            <div id="room-selection-display" class="room-section"></div>
-            <div id="food-items-display"></div>
+    <header class="relative h-[30vh] flex items-center justify-center text-center text-white overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070" class="absolute inset-0 w-full h-full object-cover brightness-50" alt="Dining Header">
+        <div class="relative">
+            <h1 class="text-4xl md:text-5xl font-black uppercase italic tracking-widest">Culinary Delights</h1>
+            <p class="text-sm font-light tracking-widest mt-2 uppercase">Fresh • Local • Gourmet</p>
         </div>
-        <div class="total-line">
-            <span>Total:</span>
-            <span>$<span id="grand-total">0.00</span></span>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 py-10 lg:flex lg:gap-8">
+        
+        <div class="lg:w-2/3">
+            <div id="menu-display-area" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="animate-pulse bg-gray-200 h-64 rounded-xl"></div>
+                <div class="animate-pulse bg-gray-200 h-64 rounded-xl"></div>
+            </div>
         </div>
-        <button class="btn-pay" onclick="proceedToPayment()">Confirm Order</button>
+
+        <div class="lg:w-1/3">
+            <div id="cart-sidebar" class="cart-sidebar bg-white lg:bg-neutral-900 lg:text-white rounded-t-3xl lg:rounded-2xl shadow-2xl p-6 lg:sticky lg:top-24 border-t-4 border-burgundy lg:border-none">
+                
+                <div onclick="toggleCart()" class="cart-handle hidden flex-col items-center mb-4 cursor-pointer">
+                    <div class="w-12 h-1 bg-gray-300 rounded-full mb-2"></div>
+                    <p class="text-[10px] font-bold uppercase text-gray-500">Tap to view Selection</p>
+                </div>
+
+                <h3 class="text-xl font-bold text-burgundy lg:text-lime mb-4 border-b border-gray-100 lg:border-neutral-700 pb-2">Your Selection</h3>
+                
+                <div class="cart-scroll max-h-[40vh] overflow-y-auto pr-2">
+                    <div id="room-selection-display" class="mb-4">
+                        </div>
+                    <div id="food-items-display" class="space-y-3">
+                        </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-200 lg:border-neutral-700">
+                    <div class="flex justify-between items-center text-xl font-black">
+                        <span class="text-gray-600 lg:text-gray-400">Total:</span>
+                        <span class="text-burgundy lg:text-lime">KSH <span id="grand-total">0.00</span></span>
+                    </div>
+                    <button class="w-full bg-lime hover:bg-green-400 text-black font-black py-4 rounded-xl mt-6 transition-all transform active:scale-95 uppercase tracking-widest shadow-lg" onclick="proceedToPayment()">
+                        Confirm Order
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-<script src="config.js"></script>
+
+    <script src="config.js"></script>
     <script>
-        // Ensure the order object is fully structured even if localStorage is empty
         let rawOrder = localStorage.getItem('currentOrder');
         let order = rawOrder ? JSON.parse(rawOrder) : { rooms: {}, foods: {}, total: 0 };
         if (!order.foods) order.foods = {};
         if (!order.rooms) order.rooms = {};
+
+        function toggleCart() {
+            document.getElementById('cart-sidebar').classList.toggle('open');
+        }
 
         async function fetchMenu() {
             try {
@@ -96,17 +115,24 @@
                 const meals = services.filter(s => s.type === 'food');
                 
                 meals.forEach((meal, index) => {
-                    const mealId = `meal-${index}`;
                     const photos = Array.isArray(meal.photos) ? meal.photos : [meal.photos];
-                    let imgHtml = photos.map((photo, i) => `<img src="${photo}" class="slider-img ${i === 0 ? 'active' : ''}">`).join('');
+                    const mainImg = photos[0] || 'https://via.placeholder.com/400x300';
 
                     menuArea.innerHTML += `
-                        <div class="food-card" id="${mealId}">
-                            <div class="slider-container"><div class="img-wrapper">${imgHtml}</div></div>
-                            <div class="food-info">
-                                <h3>${meal.name}</h3>
-                                <div class="price-container"><span class="current-price">$${meal.price}</span></div>
-                                <button class="btn-add" onclick="addItem('${meal.name}', ${meal.price})">Add to Order</button>
+                        <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 group">
+                            <div class="h-48 overflow-hidden relative">
+                                <img src="${mainImg}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                                <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full font-bold text-burgundy shadow-sm">
+                                    KSH ${meal.price}
+                                </div>
+                            </div>
+                            <div class="p-5">
+                                <h3 class="font-bold text-lg text-gray-800 capitalize">${meal.name}</h3>
+                                <p class="text-gray-500 text-xs mt-1 mb-4 line-clamp-2">${meal.details || 'A chef-curated specialty made with the freshest local ingredients.'}</p>
+                                <button class="w-full bg-gray-900 hover:bg-burgundy text-white font-bold py-3 rounded-xl transition-colors active:scale-95" 
+                                    onclick="addItem('${meal.name}', ${meal.price})">
+                                    Add to Order
+                                </button>
                             </div>
                         </div>`;
                 });
@@ -122,29 +148,19 @@
             saveAndUpdate();
         }
 
-        // REDUCE QUANTITY FUNCTION
         function reduceItem(name, type) {
             let target = (type === 'food') ? order.foods : order.rooms;
-            
             if (target[name]) {
                 target[name].qty -= 1;
-                if (target[name].qty <= 0) {
-                    delete target[name];
-                }
+                if (target[name].qty <= 0) delete target[name];
             }
             saveAndUpdate();
         }
 
         function saveAndUpdate() {
             let total = 0;
-            // Calculate Rooms
-            for (let r in order.rooms) {
-                total += order.rooms[r].price * order.rooms[r].qty;
-            }
-            // Calculate Foods
-            for (let f in order.foods) {
-                total += order.foods[f].price * order.foods[f].qty;
-            }
+            for (let r in order.rooms) total += order.rooms[r].price * order.rooms[r].qty;
+            for (let f in order.foods) total += order.foods[f].price * order.foods[f].qty;
             
             order.total = total;
             localStorage.setItem('currentOrder', JSON.stringify(order));
@@ -162,13 +178,11 @@
             if (roomKeys.length > 0) {
                 roomKeys.forEach(name => {
                     roomList.innerHTML += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                            <span><strong>🏠 ${name}</strong> (x${order.rooms[name].qty})</span>
-                            <button class="btn-reduce" onclick="reduceItem('${name}', 'room')">−</button>
+                        <div class="flex justify-between items-center bg-lime/10 lg:bg-lime/20 p-3 rounded-lg border-l-4 border-lime mb-2">
+                            <span class="text-xs font-bold text-gray-800 lg:text-white truncate pr-2">🏠 ${name} (x${order.rooms[name].qty})</span>
+                            <button class="bg-red-500 text-white w-6 h-6 rounded flex items-center justify-center font-bold text-sm" onclick="reduceItem('${name}', 'room')">−</button>
                         </div>`;
                 });
-            } else {
-                roomList.innerHTML = '<span style="color:#999">No room selected</span>';
             }
 
             // Food Display
@@ -177,20 +191,28 @@
             foodKeys.forEach(name => {
                 const item = order.foods[name];
                 foodList.innerHTML += `
-                    <div class="order-item">
-                        <div><span class="item-qty-label">${item.qty}x</span> ${name}</div>
-                        <div style="display:flex; align-items:center;">
-                            <span>$${(item.price * item.qty).toFixed(2)}</span>
-                            <button class="btn-reduce" onclick="reduceItem('${name}', 'food')">−</button>
+                    <div class="flex justify-between items-center border-b border-gray-100 lg:border-neutral-800 pb-2">
+                        <div class="text-sm">
+                            <span class="font-bold text-burgundy lg:text-lime mr-2">${item.qty}x</span>
+                            <span class="text-gray-700 lg:text-gray-300">${name}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-gray-600 lg:text-gray-400">KSH ${(item.price * item.qty).toFixed(0)}</span>
+                            <button class="bg-gray-200 lg:bg-neutral-800 text-gray-600 lg:text-white w-6 h-6 rounded flex items-center justify-center hover:bg-red-500 transition-colors" 
+                                onclick="reduceItem('${name}', 'food')">−</button>
                         </div>
                     </div>`;
             });
 
-            document.getElementById('grand-total').innerText = order.total.toFixed(2);
+            if(foodKeys.length === 0 && roomKeys.length === 0) {
+                foodList.innerHTML = '<p class="text-center text-gray-400 py-10 italic text-sm">Your selection is empty</p>';
+            }
+
+            document.getElementById('grand-total').innerText = order.total.toLocaleString();
         }
 
         function proceedToPayment() {
-            if (order.total <= 0) { return alert("Order is empty!"); }
+            if (order.total <= 0) return alert("Order is empty!");
             window.location.href = 'payment.html';
         }
 

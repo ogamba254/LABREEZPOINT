@@ -1,35 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Order Summary</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Your Order | LABREEZPOINT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .box { max-width: 500px; margin: 50px auto; border: 1px solid #ccc; padding: 20px; border-radius: 10px; }
-        .summary-item { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .total { font-size: 1.5rem; border-top: 2px solid #333; padding-top: 10px; }
+        :root { --burgundy: #8B1A2B; --lime-green: #32CD32; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        .bg-burgundy { background-color: var(--burgundy); }
+        .text-lime { color: var(--lime-green); }
+        .bg-lime { background-color: var(--lime-green); }
+        
+        /* Glassmorphism effect for the summary box */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
-<body>
-    <div class="box">
-        <h2>Your Order Summary</h2>
-        <div id="summary"></div>
-        <div class="total">Total: $<span id="grandTotal">0</span></div>
-        <button onclick="window.location.href='payment.html'" style="width:100%; padding:15px; background:orange; margin-top:20px;">Proceed to Payment</button>
+<body class="bg-gray-100 min-h-screen">
+
+    <nav class="bg-burgundy px-6 py-4 flex justify-between items-center shadow-md">
+        <a href="index.html" class="text-white text-xl font-bold tracking-tighter">
+            LA <span class="text-lime">BREEZE</span> POINT
+        </a>
+    </nav>
+
+    <div class="max-w-xl mx-auto mt-8 px-4">
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex flex-col items-center">
+                <div class="w-8 h-8 bg-burgundy text-white rounded-full flex items-center justify-center text-xs font-bold">✓</div>
+                <span class="text-[10px] uppercase mt-2 font-bold text-gray-500">Selection</span>
+            </div>
+            <div class="flex-1 h-1 bg-burgundy mx-2 mb-6"></div>
+            <div class="flex flex-col items-center">
+                <div class="w-8 h-8 bg-burgundy text-white rounded-full flex items-center justify-center text-xs font-bold ring-4 ring-burgundy/20">2</div>
+                <span class="text-[10px] uppercase mt-2 font-bold text-burgundy">Summary</span>
+            </div>
+            <div class="flex-1 h-1 bg-gray-300 mx-2 mb-6"></div>
+            <div class="flex flex-col items-center">
+                <div class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold">3</div>
+                <span class="text-[10px] uppercase mt-2 font-bold text-gray-400">Payment</span>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
+            <div class="bg-burgundy p-6 text-center">
+                <h2 class="text-white text-2xl font-black uppercase italic tracking-widest">Order Summary</h2>
+                <p class="text-white/70 text-xs mt-1">Please review your selections before payment</p>
+            </div>
+
+            <div class="p-6 md:p-8">
+                <div id="summary-content" class="space-y-6">
+                    <div class="animate-pulse flex justify-between">
+                        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+                    </div>
+                </div>
+
+                <div class="mt-10 pt-6 border-t-2 border-dashed border-gray-200">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Grand Total</p>
+                            <h3 class="text-4xl font-black text-gray-900 tracking-tighter">
+                                KSH <span id="grandTotalDisplay">0</span>
+                            </h3>
+                        </div>
+                        <div class="text-right hidden sm:block">
+                            <p class="text-[10px] text-gray-400">Inclusive of all taxes</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 space-y-3">
+                    <button onclick="window.location.href='payment.html'" 
+                        class="w-full bg-lime hover:bg-green-400 text-black font-black py-5 rounded-2xl transition transform active:scale-95 shadow-xl uppercase tracking-widest flex items-center justify-center gap-2">
+                        Proceed to Payment
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    
+                    <button onclick="window.history.back()" 
+                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-3 rounded-2xl transition text-sm">
+                        Go Back & Edit
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-center text-gray-400 text-[10px] mt-8 mb-12 uppercase tracking-widest">
+            Secure Encryption Active • LabreezPoint Hospitality
+        </p>
     </div>
-<script src="config.js"></script>
+
+    <script src="config.js"></script>
     <script>
-        const room = JSON.parse(localStorage.getItem('selectedRoom'));
-        const foods = JSON.parse(localStorage.getItem('selectedFood')) || [];
-        let total = room ? room.price : 0;
+        // Load the centralized order object
+        const orderData = JSON.parse(localStorage.getItem('currentOrder')) || { rooms: {}, foods: {}, total: 0 };
+        const summaryDiv = document.getElementById('summary-content');
+        let displayHtml = '';
+
+        // 1. Process Rooms
+        const roomKeys = Object.keys(orderData.rooms || {});
+        if (roomKeys.length > 0) {
+            displayHtml += `<div class="mb-4"><h4 class="text-[10px] font-black text-burgundy uppercase mb-3 tracking-widest">Accommodation</h4>`;
+            roomKeys.forEach(name => {
+                const item = orderData.rooms[name];
+                displayHtml += `
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex-1">
+                        <p class="font-bold text-gray-800 text-sm leading-tight">${name}</p>
+                        <p class="text-xs text-gray-500 italic">Qty: ${item.qty}</p>
+                    </div>
+                    <span class="font-bold text-gray-900 text-sm">KSH ${(item.price * item.qty).toLocaleString()}</span>
+                </div>`;
+            });
+            displayHtml += `</div>`;
+        }
+
+        // 2. Process Food
+        const foodKeys = Object.keys(orderData.foods || {});
+        if (foodKeys.length > 0) {
+            displayHtml += `<div class="pt-4 border-t border-gray-100"><h4 class="text-[10px] font-black text-lime uppercase mb-3 tracking-widest">Dining & Drinks</h4>`;
+            foodKeys.forEach(name => {
+                const item = orderData.foods[name];
+                displayHtml += `
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex-1">
+                        <p class="font-bold text-gray-800 text-sm leading-tight">${name}</p>
+                        <p class="text-xs text-gray-500 italic">Qty: ${item.qty}</p>
+                    </div>
+                    <span class="font-bold text-gray-900 text-sm">KSH ${(item.price * item.qty).toLocaleString()}</span>
+                </div>`;
+            });
+            displayHtml += `</div>`;
+        }
+
+        // Fallback if empty
+        if (roomKeys.length === 0 && foodKeys.length === 0) {
+            displayHtml = `<div class="text-center py-10 text-gray-400">Your selection is empty.</div>`;
+        }
+
+        // Render UI
+        summaryDiv.innerHTML = displayHtml;
+        document.getElementById('grandTotalDisplay').innerText = (orderData.total || 0).toLocaleString();
         
-        let html = `<div class="summary-item"><span>Room: ${room.name}</span><span>$${room.price}</span></div>`;
-        foods.forEach(f => {
-            html += `<div class="summary-item"><span>Food: ${f.name}</span><span>$${f.price}</span></div>`;
-            total += f.price;
-        });
-        
-        document.getElementById('summary').innerHTML = html;
-        document.getElementById('grandTotal').innerText = total;
-        localStorage.setItem('totalToPay', total);
+        // Final Sync for Payment Page
+        localStorage.setItem('totalToPay', orderData.total);
     </script>
 </body>
 </html>

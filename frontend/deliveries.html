@@ -4,158 +4,147 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Deliveries | LABREEZPOINT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="config.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
-        :root { --burgundy: #8B1A2B; --lime-green: #32CD32; --off-white: #fdfdfd; --dark-bg: #1a1a1a; }
-        body { margin: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--off-white); color: #333; }
+        :root { --burgundy: #8B1A2B; --lime-green: #32CD32; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        .bg-burgundy { background-color: var(--burgundy); }
+        .text-lime { color: var(--lime-green); }
+        .border-lime { border-color: var(--lime-green); }
+        .bg-lime { background-color: var(--lime-green); }
         
-        nav { background: var(--burgundy); padding: 0 60px; display: flex; justify-content: space-between; align-items: center; height: 70px; position: sticky; top: 0; z-index: 1000; }
-        .logo-text { color: white; font-size: 22px; font-weight: bold; text-decoration: none; }
-        .logo-text span { color: var(--lime-green); }
-        .nav-links a { color: white; text-decoration: none; text-transform: uppercase; font-size: 13px; margin-left: 20px; font-weight: bold; }
+        /* Custom Scrollbar for Cart */
+        .cart-scroll::-webkit-scrollbar { width: 5px; }
+        .cart-scroll::-webkit-scrollbar-track { background: #2a2a2a; }
+        .cart-scroll::-webkit-scrollbar-thumb { background: var(--burgundy); border-radius: 10px; }
 
-        .page-header { background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070'); background-size: cover; height: 25vh; display: flex; justify-content: center; align-items: center; color: white; text-align: center; }
-
-        .order-layout { display: grid; grid-template-columns: 1fr 400px; gap: 30px; padding: 40px 60px; max-width: 1400px; margin: auto; }
-
-        .menu-section h2 { color: var(--burgundy); border-left: 5px solid var(--lime-green); padding-left: 15px; margin-bottom: 30px; }
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .food-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: 0.3s; border: 1px solid #eee; }
-        .food-card img { width: 100%; height: 180px; object-fit: cover; }
-        .food-info { padding: 15px; text-align: center; }
-        .food-price { color: var(--burgundy); font-weight: bold; font-size: 1.2rem; display: block; margin-bottom: 10px; }
-        .btn-add-food { background: var(--burgundy); color: white; border: none; padding: 10px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 0 0 8px 8px; }
-        .btn-add-food:hover { background: var(--lime-green); color: black; }
-
-        .delivery-card { background: var(--dark-bg); color: white; padding: 25px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: sticky; top: 100px; }
-        .delivery-card h3 { margin-top: 0; color: var(--lime-green); border-bottom: 1px solid #444; padding-bottom: 10px; }
-        
-        .cart-items-preview { max-height: 250px; overflow-y: auto; margin-bottom: 15px; border-bottom: 1px solid #444; padding-right: 5px; }
-        
-        .cart-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 12px; background: #252525; padding: 8px; border-radius: 6px; }
-        .cart-item-name { flex: 1; color: #fff; padding-right: 10px; }
-        
-        .qty-controls { display: flex; align-items: center; gap: 10px; background: #333; padding: 4px 8px; border-radius: 4px; margin-right: 10px; }
-        .qty-btn { background: transparent; color: var(--lime-green); border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; padding: 0 5px; line-height: 1; }
-        .qty-btn:hover { color: white; }
-        .qty-num { min-width: 15px; text-align: center; font-weight: bold; }
-        
-        .cart-item-total { font-weight: bold; color: var(--lime-green); min-width: 60px; text-align: right; }
-        
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 4px; font-size: 0.7rem; color: #bbb; text-transform: uppercase; }
-        .form-group input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #444; background: #2a2a2a; color: white; box-sizing: border-box; }
-
-        .payment-method { margin-top: 20px; padding-top: 15px; border-top: 1px solid #444; }
-        .method-options { display: flex; gap: 10px; margin-top: 10px; }
-        .method-btn { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid var(--lime-green); background: transparent; color: white; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
-        .method-btn.active { background: var(--lime-green); color: black; }
-
-        .total-display { font-size: 1.4rem; font-weight: bold; margin: 15px 0; display: flex; justify-content: space-between; color: var(--lime-green); }
-        .btn-place-order { background: var(--lime-green); color: black; border: none; width: 100%; padding: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
-        .btn-place-order:disabled { background: #555; color: #888; cursor: not-allowed; }
-
-        @media (max-width: 1000px) { .order-layout { grid-template-columns: 1fr; } }
+        /* Animation for adding items */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .item-added { animation: pop 0.3s ease-out; }
     </style>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800">
 
-    <nav>
-        <a href="index.html" class="logo-text">LA <span>BREEZE</span> POINT</a>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="dining.html">Dining</a>
+    <nav class="bg-burgundy px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-lg">
+        <a href="index.html" class="text-white text-xl font-bold tracking-tight">
+            LA <span class="text-lime">BREEZE</span> POINT
+        </a>
+        <div class="space-x-4">
+            <a href="index.html" class="text-white text-xs uppercase font-bold hover:text-lime-green transition">Home</a>
+            <a href="dining.html" class="text-white text-xs uppercase font-bold hover:text-lime-green transition">Dining</a>
         </div>
     </nav>
 
-    <header class="page-header">
-        <h1>Gourmet Delivery</h1>
+    <header class="relative h-48 flex items-center justify-center text-center text-white bg-black">
+        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070" class="absolute inset-0 w-full h-full object-cover opacity-50" alt="Food Header">
+        <h1 class="relative text-4xl font-black italic tracking-widest uppercase">Gourmet Delivery</h1>
     </header>
 
-    <div class="order-layout">
-        <div class="menu-section">
-            <h2>Our Menu</h2>
-            <div class="menu-grid" id="menu-area"></div>
+    <div class="max-w-7xl mx-auto px-4 py-8 lg:flex lg:gap-8">
+        
+        <div class="lg:w-2/3">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="h-10 w-2 bg-burgundy rounded-full"></div>
+                <h2 class="text-3xl font-bold text-gray-900">Explore Menu</h2>
+            </div>
+            
+            <div id="menu-area" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div class="animate-pulse flex flex-col space-y-4">
+                    <div class="bg-gray-200 h-48 rounded-lg"></div>
+                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
+            </div>
         </div>
 
-        <div class="checkout-sidebar">
-            <div class="delivery-card">
-                <h3>Checkout</h3>
-                <div id="cart-preview" class="cart-items-preview"></div>
+        <div class="lg:w-1/3 mt-10 lg:mt-0">
+            <div class="bg-neutral-900 text-white p-6 rounded-2xl shadow-2xl sticky top-24">
+                <h3 class="text-lime text-xl font-bold mb-4 border-b border-neutral-700 pb-2 flex justify-between">
+                    Your Tray <span id="item-count" class="text-sm bg-burgundy px-2 py-1 rounded text-white">0</span>
+                </h3>
 
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="cust-name" placeholder="John Doe">
-                </div>
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" id="cust-phone" placeholder="0712345678">
-                </div>
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="cust-email" placeholder="john@example.com">
-                </div>
-                <div class="form-group">
-                    <label>Delivery Address / Room #</label>
-                    <input type="text" id="cust-address" placeholder="Room 201 or Street Name">
+                <div id="cart-preview" class="cart-scroll max-h-[300px] overflow-y-auto mb-6 space-y-3 pr-2 text-sm">
+                    <p class="text-gray-500 italic text-center py-4">Your tray is currently empty...</p>
                 </div>
 
-                <div class="payment-method">
-                    <label style="font-size: 0.75rem; color: #bbb;">PAYMENT OPTION</label>
-                    <div class="method-options">
-                        <button class="method-btn active" onclick="setMethod('mpesa', this)">M-PESA</button>
-                        <button class="method-btn" onclick="setMethod('cod', this)">PAY ON DELIVERY</button>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-gray-400">Delivery Information</label>
+                        <input type="text" id="cust-name" placeholder="Full Name" class="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-sm focus:outline-none focus:border-lime">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="tel" id="cust-phone" placeholder="Phone (e.g. 07...)" class="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-sm focus:outline-none focus:border-lime">
+                        <input type="email" id="cust-email" placeholder="Email" class="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-sm focus:outline-none focus:border-lime">
+                    </div>
+                    <input type="text" id="cust-address" placeholder="Room Number or Physical Address" class="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-sm focus:outline-none focus:border-lime">
+                </div>
+
+                <div class="mt-6">
+                    <label class="text-[10px] uppercase font-bold text-gray-400">Select Payment</label>
+                    <div class="flex gap-2 mt-2">
+                        <button id="btn-mpesa" onclick="setMethod('mpesa')" class="flex-1 py-3 rounded-lg border-2 border-lime bg-lime text-black font-bold text-xs transition-all">M-PESA</button>
+                        <button id="btn-cod" onclick="setMethod('cod')" class="flex-1 py-3 rounded-lg border-2 border-neutral-700 text-gray-400 font-bold text-xs transition-all">ON DELIVERY</button>
                     </div>
                 </div>
 
-                <div class="total-display">
-                    <span>Total:</span>
-                    <span id="grand-total">KSH 0.00</span>
+                <div class="mt-8 pt-4 border-t border-neutral-700">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-gray-400 font-medium">Total Payable</span>
+                        <span id="grand-total" class="text-2xl font-black text-lime">KSH 0</span>
+                    </div>
+                    <button id="submit-btn" onclick="processOrder()" class="w-full bg-lime hover:bg-green-400 text-black font-black py-4 rounded-xl transition transform active:scale-95 shadow-lg uppercase tracking-widest">
+                        Complete Order
+                    </button>
                 </div>
-
-                <button class="btn-place-order" id="submit-btn" onclick="processOrder()">Complete Order</button>
             </div>
         </div>
     </div>
-<script src="config.js"></script>
+
     <script>
         let order = { foods: {}, total: 0 };
         let paymentMethod = 'mpesa';
         let pollingActive = false;
-        let countdownInterval;
-        let pollInterval;
+        let countdownInterval, pollInterval;
 
-        // Initialize EmailJS - REPLACE WITH YOUR KEYS
+        // Initialize EmailJS
         (function() { emailjs.init("YOUR_EMAILJS_PUBLIC_KEY"); })();
 
         async function loadMenu() {
             try {
-                // Point to Render Backend using API_URL from config.js
                 const response = await fetch(`${API_URL}/api/services`);
                 const services = await response.json();
                 const menuArea = document.getElementById('menu-area');
-                // Filter items typed as 'food'
                 const foods = services.filter(s => s.type && s.type.toLowerCase().includes('food'));
                 
                 if (foods.length === 0) {
-                    menuArea.innerHTML = "<p>No food items available at the moment.</p>";
+                    menuArea.innerHTML = "<p class='col-span-full text-center text-gray-400 py-10'>No food items available today.</p>";
                     return;
                 }
 
                 menuArea.innerHTML = foods.map(item => `
-                    <div class="food-card">
-                        <img src="${item.photos?.[0] || 'https://via.placeholder.com/300'}" alt="${item.name}">
-                        <div class="food-info">
-                            <h3>${item.name}</h3>
-                            <span class="food-price">KSH ${item.price}</span>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300">
+                        <div class="relative overflow-hidden h-48">
+                            <img src="${item.photos?.[0] || 'https://via.placeholder.com/300'}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                            <div class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-burgundy font-bold text-sm shadow">
+                                KSH ${item.price}
+                            </div>
                         </div>
-                        <button class="btn-add-food" onclick="addToCart('${item.name}', ${item.price})">ADD TO TRAY</button>
+                        <div class="p-5">
+                            <h3 class="font-bold text-lg text-gray-800 mb-1">${item.name}</h3>
+                            <p class="text-gray-500 text-xs mb-4 line-clamp-1">${item.details || 'Freshly prepared gourmet meal'}</p>
+                            <button onclick="addToCart('${item.name}', ${item.price})" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-burgundy transition-colors active:scale-95">
+                                Add to Tray
+                            </button>
+                        </div>
                     </div>
                 `).join('');
             } catch (err) { 
-                console.error("Menu Load Error:", err); 
-                document.getElementById('menu-area').innerHTML = "<p>Error loading menu. Please try again later.</p>";
+                document.getElementById('menu-area').innerHTML = "<p>Connection Error.</p>";
             }
         }
 
@@ -169,85 +158,115 @@
         }
 
         function changeQty(name, delta) {
-            if (!order.foods[name]) return;
             order.foods[name].qty += delta;
             if (order.foods[name].qty <= 0) delete order.foods[name];
             updateUI();
         }
 
-        function setMethod(method, btn) {
+        function setMethod(method) {
             paymentMethod = method;
-            document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            const mpesaBtn = document.getElementById('btn-mpesa');
+            const codBtn = document.getElementById('btn-cod');
+            
+            if(method === 'mpesa') {
+                mpesaBtn.classList.add('bg-lime', 'text-black', 'border-lime');
+                codBtn.classList.remove('bg-lime', 'text-black', 'border-lime');
+                codBtn.classList.add('text-gray-400', 'border-neutral-700');
+            } else {
+                codBtn.classList.add('bg-lime', 'text-black', 'border-lime');
+                mpesaBtn.classList.remove('bg-lime', 'text-black', 'border-lime');
+                mpesaBtn.classList.add('text-gray-400', 'border-neutral-700');
+            }
         }
 
         function updateUI() {
             const preview = document.getElementById('cart-preview');
-            let html = ''; let total = 0;
+            let html = ''; let total = 0; let count = 0;
+            
             Object.keys(order.foods).forEach(name => {
                 const item = order.foods[name];
                 const itemTotal = item.price * item.qty;
                 total += itemTotal;
+                count += item.qty;
                 html += `
-                <div class="cart-row">
-                    <span class="cart-item-name">${name}</span>
-                    <div class="qty-controls">
-                        <button class="qty-btn" onclick="changeQty('${name}', -1)">-</button>
-                        <span class="qty-num">${item.qty}</span>
-                        <button class="qty-btn" onclick="changeQty('${name}', 1)">+</button>
+                <div class="flex justify-between items-center bg-neutral-800/50 p-3 rounded-xl border border-neutral-700/50">
+                    <div class="flex-1">
+                        <p class="font-bold text-white text-xs">${name}</p>
+                        <p class="text-lime text-[10px]">KSH ${itemTotal}</p>
                     </div>
-                    <span class="cart-item-total">KSH ${itemTotal.toFixed(2)}</span>
+                    <div class="flex items-center gap-3 bg-neutral-900 px-2 py-1 rounded-lg border border-neutral-700">
+                        <button onclick="changeQty('${name}', -1)" class="text-lime hover:text-white">-</button>
+                        <span class="text-xs font-bold w-4 text-center">${item.qty}</span>
+                        <button onclick="changeQty('${name}', 1)" class="text-lime hover:text-white">+</button>
+                    </div>
                 </div>`;
             });
-            preview.innerHTML = html || '<p style="color:#777; text-align:center;">Tray is empty</p>';
-            document.getElementById('grand-total').innerText = `KSH ${total.toFixed(2)}`;
+            
+            preview.innerHTML = html || '<p class="text-gray-500 italic text-center py-4">Your tray is empty</p>';
+            document.getElementById('grand-total').innerText = `KSH ${total.toLocaleString()}`;
+            document.getElementById('item-count').innerText = count;
             order.total = total;
+        }
+
+        async function processOrder() {
+            const name = document.getElementById('cust-name').value;
+            const phone = document.getElementById('cust-phone').value;
+            const email = document.getElementById('cust-email').value;
+            const address = document.getElementById('cust-address').value;
+
+            if (!name || !phone || !address) return alert("Please provide Name, Phone, and Address!");
+            if (order.total === 0) return alert("Your tray is empty!");
+
+            // Format Phone
+            let cleanPhone = phone.replace(/\D/g, '');
+            if (cleanPhone.startsWith('0')) cleanPhone = '254' + cleanPhone.substring(1);
+
+            const details = { name, phone: cleanPhone, email, address, total: order.total };
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+
+            if (paymentMethod === 'mpesa') {
+                btn.innerText = "Processing M-Pesa...";
+                initiateStkPush(details);
+            } else {
+                btn.innerText = "Ordering...";
+                handlePaymentSuccess(details, "Cash on Delivery");
+            }
         }
 
         async function initiateStkPush(details) {
             try {
-                const response = await fetch(`${API_URL}/api/mpesa/stkpush`, {
+                const res = await fetch(`${API_URL}/api/mpesa/stkpush`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        phoneNumber: details.phone,
-                        amount: details.total
-                    })
+                    body: JSON.stringify({ phoneNumber: details.phone, amount: details.total })
                 });
-
-                const result = await response.json();
-
-                if (response.ok && result.data.CheckoutRequestID) {
-                    const checkoutID = result.data.CheckoutRequestID;
-                    startPaymentMonitoring(checkoutID, details);
-                } else {
-                    throw new Error(result.message || "STK Push failed");
-                }
+                const result = await res.json();
+                if (res.ok && result.data.CheckoutRequestID) {
+                    startPaymentMonitoring(result.data.CheckoutRequestID, details);
+                } else { throw new Error("Push Failed"); }
             } catch (err) {
-                alert("M-Pesa Error: " + err.message);
+                alert("STK Push Failed. Try again.");
                 resetSubmitBtn();
             }
         }
 
         function startPaymentMonitoring(checkoutID, details) {
             const btn = document.getElementById('submit-btn');
-            let timeLeft = 90; 
+            let timeLeft = 60;
             pollingActive = true;
 
             countdownInterval = setInterval(() => {
                 timeLeft--;
-                btn.innerText = `CHECKING PIN (${timeLeft}s)`;
-                
+                btn.innerText = `PIN REQUESTED (${timeLeft}s)`;
                 if (timeLeft <= 0) {
                     stopMonitoring();
-                    alert("Payment timed out. Redirecting home...");
-                    window.location.href = 'index.html';
+                    alert("Timeout. Please try again.");
+                    resetSubmitBtn();
                 }
             }, 1000);
 
             pollInterval = setInterval(async () => {
-                if (!pollingActive) return;
-
                 try {
                     const res = await fetch(`${API_URL}/api/mpesa/query`, {
                         method: 'POST',
@@ -255,20 +274,16 @@
                         body: JSON.stringify({ CheckoutRequestID: checkoutID })
                     });
                     const data = await res.json();
-
-                    if (data.ResultCode == 0) { 
+                    if (data.ResultCode == 0) {
                         stopMonitoring();
-                        handlePaymentSuccess(details, "Paid via M-Pesa");
-                    } 
-                    else if (data.ResultCode == 1032) { 
+                        handlePaymentSuccess(details, "M-Pesa Paid");
+                    } else if (data.ResultCode) {
                         stopMonitoring();
-                        alert("Payment cancelled on your phone.");
+                        alert("Payment not successful.");
                         resetSubmitBtn();
                     }
-                } catch (err) {
-                    console.log("Waiting for user response...");
-                }
-            }, 4000); 
+                } catch (e) {}
+            }, 4000);
         }
 
         function stopMonitoring() {
@@ -277,37 +292,9 @@
             clearInterval(pollInterval);
         }
 
-        function resetSubmitBtn() {
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = false;
-            btn.innerText = "Complete Order";
-        }
-
         async function handlePaymentSuccess(details, status) {
-            try {
-                await recordOrder(details, status);
-                
-                const receiptInfo = {
-                    name: details.name,
-                    amount: details.total,
-                    method: status.includes("M-Pesa") ? "M-PESA" : "Cash",
-                    date: new Date().toLocaleString(),
-                    items: order.foods,
-                    transactionId: "LB" + Math.floor(Math.random() * 1000000)
-                };
-                localStorage.setItem('lastReceipt', JSON.stringify(receiptInfo));
-
-                sendOrderEmail(details, status).catch(e => console.error("Email Error:", e));
-
-                window.location.href = 'receipt.html';
-            } catch (err) {
-                console.error("Success Handler Error:", err);
-                window.location.href = 'receipt.html';
-            }
-        }
-
-        async function recordOrder(details, status) {
-            return fetch(`${API_URL}/api/bookings`, {
+            // Record to Database
+            await fetch(`${API_URL}/api/bookings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -317,52 +304,27 @@
                     paymentMethod: paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash',
                     paymentStatus: status,
                     totalAmount: details.total,
-                    orderDetails: order.foods,
+                    orderDetails: order.foods, // Captures items
+                    address: details.address,
                     timestamp: new Date().toISOString()
                 })
             });
+
+            // Set Receipt Data for next page
+            localStorage.setItem('lastReceipt', JSON.stringify({
+                ...details,
+                items: order.foods,
+                date: new Date().toLocaleString(),
+                status: status
+            }));
+
+            window.location.href = 'receipt.html';
         }
 
-        function sendOrderEmail(details, method) {
-            return emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
-                to_name: "Admin",
-                from_name: details.name,
-                cust_email: details.email,
-                cust_phone: details.phone,
-                delivery_address: details.address,
-                order_details: JSON.stringify(order.foods),
-                payment_method: method,
-                grand_total: "KSH " + details.total
-            });
-        }
-
-        function processOrder() {
-            const details = {
-                name: document.getElementById('cust-name').value,
-                phone: document.getElementById('cust-phone').value,
-                email: document.getElementById('cust-email').value,
-                address: document.getElementById('cust-address').value,
-                total: order.total
-            };
-
-            if (!details.name || !details.phone || !details.email || !details.address) return alert("Please fill all fields!");
-            if (order.total <= 0) return alert("Select some food first!");
-
-            let cleanPhone = details.phone.replace(/\D/g, '');
-            if (cleanPhone.startsWith('0')) cleanPhone = '254' + cleanPhone.substring(1);
-            if (!cleanPhone.startsWith('254')) cleanPhone = '254' + cleanPhone;
-            details.phone = cleanPhone;
-
+        function resetSubmitBtn() {
             const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-
-            if (paymentMethod === 'mpesa') {
-                btn.innerText = "SENDING PUSH...";
-                initiateStkPush(details);
-            } else {
-                btn.innerText = "SENDING ORDER...";
-                handlePaymentSuccess(details, "Pay on Delivery (Pending)");
-            }
+            btn.disabled = false;
+            btn.innerText = "Complete Order";
         }
 
         window.onload = loadMenu;

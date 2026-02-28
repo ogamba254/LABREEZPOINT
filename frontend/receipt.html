@@ -4,150 +4,175 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receipt | LABREEZPOINT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --burgundy: #8B1A2B; --dark: #1a1a1a; --gray: #f4f4f4; }
-        body { font-family: 'Courier New', Courier, monospace; background: #ddd; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        
-        .receipt-card { 
-            background: white; width: 380px; padding: 30px; border-radius: 2px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2); position: relative;
+        :root { --burgundy: #8B1A2B; }
+        .text-burgundy { color: var(--burgundy); }
+        .bg-burgundy { background-color: var(--burgundy); }
+
+        /* Receipt paper styling */
+        .receipt-container {
+            font-family: 'Courier New', Courier, monospace;
+            background: white;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
         }
 
-        /* Serrated edge effect for that "real receipt" look */
-        .receipt-card::after {
-            content: ""; position: absolute; bottom: -10px; left: 0; width: 100%; height: 10px;
-            background: linear-gradient(-45deg, transparent 5px, white 5px), linear-gradient(45deg, transparent 5px, white 5px);
+        /* Serrated bottom edge */
+        .serrated {
+            position: relative;
+            padding-bottom: 20px;
+        }
+        .serrated::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(-45deg, transparent 5px, white 5px), 
+                        linear-gradient(45deg, transparent 5px, white 5px);
             background-size: 10px 10px;
         }
 
-        .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 15px; margin-bottom: 15px; }
-        .header h2 { margin: 0; color: var(--burgundy); letter-spacing: 2px; }
-        .header p { margin: 5px 0; font-size: 0.8rem; text-transform: uppercase; }
-
-        .details-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; }
-        .bold { font-weight: bold; }
-
-        .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; border-bottom: 2px dashed #333; }
-        .items-table th { text-align: left; font-size: 0.8rem; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .items-table td { padding: 8px 0; font-size: 0.85rem; }
-
-        .totals { margin-top: 10px; }
-        .total-row { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; margin-top: 5px; }
-
-        .footer { text-align: center; margin-top: 30px; font-size: 0.8rem; border-top: 1px solid #eee; padding-top: 15px; }
-        
-        .no-print { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
-        .btn { padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; font-family: sans-serif; font-weight: bold; }
-        .btn-print { background: var(--burgundy); color: white; }
-        .btn-home { background: var(--dark); color: white; text-decoration: none; font-size: 13px; line-height: 24px; text-align: center; display: inline-block; width: 120px; }
-
         @media print {
-            body { background: white; padding: 0; }
-            .no-print { display: none; }
-            .receipt-card { box-shadow: none; border: none; width: 100%; }
+            body { background: white !important; }
+            .no-print { display: none !important; }
+            .receipt-container { box-shadow: none !important; border: none !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; }
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-200 min-h-screen flex flex-col items-center py-10 px-4">
 
-    <div>
-        <div class="receipt-card" id="receipt">
-            <div class="header">
-                <h2>LA BREEZE POINT</h2>
-                <p>Nairobi, Kenya</p>
-                <p>Tel: +254 736 801 389</p>
+    <div class="w-full max-w-md">
+        <div class="receipt-container p-8 rounded-sm serrated" id="receipt">
+            <div class="text-center border-b-2 border-dashed border-gray-800 pb-6 mb-6">
+                <h2 class="text-2xl font-black text-burgundy tracking-tighter">LA BREEZE POINT</h2>
+                <p class="text-xs uppercase mt-1 text-gray-600">Nairobi, Kenya</p>
+                <p class="text-xs text-gray-600">Tel: +254 736 801 389</p>
             </div>
 
-            <div class="details-row"><span>Date:</span> <span id="date">--/--/----</span></div>
-            <div class="details-row"><span>Receipt #:</span> <span id="receiptId">#000000</span></div>
-            <div class="details-row"><span>Customer:</span> <span id="custName" class="bold">---</span></div>
-            <div class="details-row"><span>Method:</span> <span id="payMethod" class="bold">---</span></div>
+            <div class="space-y-1 text-xs mb-6 uppercase">
+                <div class="flex justify-between"><span>Date:</span> <span id="date" class="font-bold">--/--/----</span></div>
+                <div class="flex justify-between"><span>Receipt #:</span> <span id="receiptId" class="font-bold">#000000</span></div>
+                <div class="flex justify-between"><span>Customer:</span> <span id="custName" class="font-bold truncate max-w-[150px]">---</span></div>
+                <div class="flex justify-between"><span>Payment:</span> <span id="payMethod" class="font-bold">---</span></div>
+            </div>
 
-            <table class="items-table">
+            <table class="w-full text-xs mb-6">
                 <thead>
-                    <tr>
-                        <th>Item Description</th>
-                        <th style="text-align: center;">Qty</th>
-                        <th style="text-align: right;">Amount</th>
+                    <tr class="border-b border-gray-200 text-left">
+                        <th class="py-2">DESCRIPTION</th>
+                        <th class="py-2 text-center">QTY</th>
+                        <th class="py-2 text-right">PRICE</th>
                     </tr>
                 </thead>
-                <tbody id="itemsBody">
+                <tbody id="itemsBody" class="divide-y divide-gray-50">
                     </tbody>
             </table>
 
-            <div class="totals">
-                <div class="total-row">
+            <div class="border-t-2 border-dashed border-gray-800 pt-4">
+                <div class="flex justify-between items-center text-lg font-black">
                     <span>TOTAL</span>
                     <span id="grandTotal">KSH 0.00</span>
                 </div>
+                <p class="text-[10px] text-center text-gray-500 mt-4 italic">Prices inclusive of VAT</p>
             </div>
 
-            <div class="footer">
-                <p>Thank you for choosing La Breeze Point!</p>
-                <p>Serving you is our pleasure.</p>
-                <p>*** Keep this for your records ***</p>
+            <div class="text-center mt-8 space-y-1">
+                <p class="text-xs font-bold">Thank you for your visit!</p>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Serving you is our pleasure</p>
+                <div class="pt-4 opacity-30 text-[8px] font-sans">
+                    System generated receipt • LabreezPoint Hospitality
+                </div>
             </div>
         </div>
 
-        <div class="no-print">
-            <button class="btn btn-print" onclick="window.print()">Print Receipt</button>
-            <a href="index.html" class="btn btn-home">Back to Home</a>
+        <div class="no-print mt-8 grid grid-cols-2 gap-4">
+            <button onclick="window.print()" class="bg-burgundy text-white font-bold py-4 rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" />
+                </svg>
+                Print Receipt
+            </button>
+            <a href="index.html" class="bg-white text-gray-800 border border-gray-300 font-bold py-4 rounded-2xl shadow-lg hover:bg-gray-50 active:scale-95 transition flex items-center justify-center">
+                Back to Home
+            </a>
         </div>
     </div>
 
     <script>
     window.onload = function() {
-        // MATCHED KEY: Must match the key saved in payment page
-        const txData = JSON.parse(localStorage.getItem('lastReceipt'));
+        /**
+         * The Receipt page needs to look for data from TWO possible sources:
+         * 1. 'lastReceipt' (from Food Delivery)
+         * 2. 'lastTransaction' (from Hotel Booking/Dining)
+         */
+        const foodReceipt = JSON.parse(localStorage.getItem('lastReceipt'));
+        const bookingReceipt = JSON.parse(localStorage.getItem('lastTransaction'));
+        
+        // Use whichever one exists
+        const txData = foodReceipt || bookingReceipt;
         
         if (!txData) {
-            alert("No receipt data found. Returning home.");
+            alert("No receipt data found.");
             window.location.href = 'index.html';
             return;
         }
 
-        // 1. Header Details
-        document.getElementById('date').innerText = txData.date || new Date().toLocaleString();
-        document.getElementById('receiptId').innerText = "#" + (txData.transactionId || "000000");
-        document.getElementById('custName').innerText = txData.name || "Valued Customer";
-        document.getElementById('payMethod').innerText = txData.method || "Processed";
+        // 1. Meta Details
+        document.getElementById('date').innerText = txData.date || txData.timestamp || new Date().toLocaleString();
+        document.getElementById('receiptId').innerText = "#" + (txData.transactionId || Math.floor(Math.random() * 999999));
+        document.getElementById('custName').innerText = txData.name || txData.guestName || "Guest";
+        document.getElementById('payMethod').innerText = txData.method || txData.paymentMethod || "M-PESA";
         
-        // 2. Format Total
-        const totalAmount = parseFloat(txData.amount) || 0;
+        // 2. Grand Total
+        const totalAmount = parseFloat(txData.amount || txData.totalAmount) || 0;
         document.getElementById('grandTotal').innerText = "KSH " + totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2});
 
-        // 3. Fill Items Table
+        // 3. Item List Processing
         const itemsBody = document.getElementById('itemsBody');
-        const items = txData.items; 
-
         let itemsHtml = '';
         
-        // Logical check for rooms/food object structure
-        if (items && Object.keys(items).length > 0) {
-            for (const [name, data] of Object.entries(items)) {
-                const qty = data.qty || 1;
-                const price = data.price || 0;
-                itemsHtml += `
-                    <tr>
-                        <td>${name}</td>
-                        <td style="text-align: center;">${qty}</td>
-                        <td style="text-align: right;">${(price * qty).toLocaleString()}</td>
-                    </tr>
-                `;
+        // items might be inside 'items' (delivery) or 'orderDetails' (booking)
+        const orderItems = txData.items || (txData.orderDetails ? txData.orderDetails.foods : null);
+        const roomItems = (txData.orderDetails && txData.orderDetails.rooms) ? txData.orderDetails.rooms : null;
+
+        // Process Rooms first if they exist
+        if (roomItems) {
+            for (const [name, data] of Object.entries(roomItems)) {
+                itemsHtml += createRow(`ROOM: ${name}`, data.qty, data.price);
             }
-        } else {
-            // Fallback if item details are missing
-            itemsHtml = `
-                <tr>
-                    <td>Hotel Service / Booking</td>
-                    <td style="text-align: center;">1</td>
-                    <td style="text-align: right;">${totalAmount.toLocaleString()}</td>
-                </tr>
-            `;
+        }
+
+        // Process Food
+        if (orderItems) {
+            for (const [name, data] of Object.entries(orderItems)) {
+                itemsHtml += createRow(name, data.qty, data.price);
+            }
+        }
+
+        // Fallback row
+        if (!itemsHtml) {
+            itemsHtml = createRow("Service/Booking", 1, totalAmount);
         }
         
         itemsBody.innerHTML = itemsHtml;
+        
+        // Optional: Clean up storage so receipt doesn't show old data next time
+        // localStorage.removeItem('lastReceipt'); 
+        // localStorage.removeItem('lastTransaction');
     };
+
+    function createRow(name, qty, price) {
+        return `
+            <tr>
+                <td class="py-3 font-bold">${name}</td>
+                <td class="py-3 text-center">${qty}</td>
+                <td class="py-3 text-right font-bold">${(price * qty).toLocaleString()}</td>
+            </tr>
+        `;
+    }
     </script>
 </body>
 </html>

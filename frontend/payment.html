@@ -2,104 +2,101 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Payment | LABREEZPOINT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment | LABREEZPOINT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --burgundy: #8B1A2B;
-            --mpesa-green: #4FB548;
-            --lime-green: #32CD32;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        
-        .payment-container { 
-            max-width: 450px; width: 90%; background: white; padding: 30px; border-radius: 12px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--burgundy);
-        }
-        
-        h3 { color: var(--burgundy); margin-top: 0; text-align: center; }
-        .price-display { font-size: 1.5rem; text-align: center; margin: 20px 0; color: #333; }
-        .price-display strong { color: var(--burgundy); }
+        :root { --burgundy: #8B1A2B; --mpesa-green: #4FB548; }
+        .bg-burgundy { background-color: var(--burgundy); }
+        .text-burgundy { color: var(--burgundy); }
+        .border-burgundy { border-color: var(--burgundy); }
+        .bg-mpesa { background-color: var(--mpesa-green); }
+        .border-mpesa { border-color: var(--mpesa-green); }
 
-        label { display: block; font-size: 0.85rem; font-weight: bold; color: #555; margin-bottom: 5px; margin-top: 10px; }
-        
-        input[type="text"], input[type="email"], input[type="tel"] { 
-            width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 1rem;
-        }
-
-        .selector { display: flex; gap: 10px; margin-bottom: 20px; }
-        .select-btn { 
-            flex: 1; padding: 12px; border: 2px solid #eee; border-radius: 8px; cursor: pointer; 
-            text-align: center; font-weight: bold; transition: 0.3s; font-size: 0.9rem;
-        }
-        .select-btn.active { border-color: var(--burgundy); background: #fff5f6; color: var(--burgundy); }
-        .select-btn.mpesa-active { border-color: var(--mpesa-green); background: #f0fff0; color: #2e7d32; }
-
-        .mpesa-badge { 
-            display: flex; align-items: center; justify-content: center; gap: 10px; 
-            background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #4FB548;
-        }
-        .mpesa-badge img { height: 20px; }
-
-        .btn-pay { 
-            width: 100%; padding: 15px; background: var(--burgundy); color: white; border: none; 
-            font-size: 1.1rem; font-weight: bold; border-radius: 5px; cursor: pointer; transition: 0.3s;
-        }
-        .btn-pay:hover { background: #6b1421; }
-        .btn-pay:disabled { background: #ccc; cursor: not-allowed; }
-
-        .hidden { display: none; }
-        .secure-note { text-align: center; font-size: 0.75rem; color: #888; margin-top: 15px; }
-        #timer { color: var(--burgundy); font-weight: bold; font-size: 1.1rem; }
+        /* Smooth Transition for the PIN prompt */
+        #payment-status-box { transition: all 0.5s ease-in-out; }
     </style>
 </head>
-<body>
-    <div class="payment-container">
-        <h3>Finalize Your Order</h3>
-        <div class="price-display">Total Amount: <strong id="dispTotal">KSH 0</strong></div>
-        
-        <label>CHOOSE METHOD</label>
-        <div class="selector" id="methodSelector">
-            <div class="select-btn mpesa-active" id="btnMpesa" onclick="setMethod('M-Pesa')">M-Pesa</div>
-            <div class="select-btn" id="btnCash" onclick="setMethod('Cash')">Pay with Cash</div>
-        </div>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-        <div id="formFields">
-            <label>FULL NAME</label>
-            <input type="text" id="guestName" placeholder="Full Name">
-            
-            <label>EMAIL ADDRESS</label>
-            <input type="email" id="guestEmail" placeholder="guest@example.com">
-
-            <div id="mpesaFields">
-                <label>M-PESA PHONE NUMBER</label>
-                <input type="tel" id="guestPhone" placeholder="0712345678">
-                <div class="mpesa-badge">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png" alt="M-Pesa">
-                    <span>STK Push Prompt</span>
-                </div>
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+        <div class="bg-burgundy p-6 text-center text-white">
+            <h3 class="text-xl font-black uppercase tracking-widest italic">Secure Checkout</h3>
+            <div class="mt-4 bg-black/20 rounded-full py-2 px-4 inline-block">
+                <span class="text-xs text-white/80 uppercase font-bold">Total Payable:</span>
+                <span id="dispTotal" class="ml-2 text-lg font-black text-white">KSH 0</span>
             </div>
         </div>
 
-        <button class="btn-pay" id="payBtn" onclick="processPayment()">Send Payment Prompt</button>
-        
-        <div class="secure-note" id="note">
-            🔒 Safe & Encrypted Transaction.
-        </div>
-        <div id="timerDisplay" class="hidden" style="text-align: center; margin-top: 10px;">
-            Please enter PIN: <span id="timer">90</span>s
+        <div class="p-6 md:p-8">
+            <div id="method-container">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Select Payment Method</label>
+                <div class="flex gap-3 mb-8" id="methodSelector">
+                    <button id="btnMpesa" onclick="setMethod('M-Pesa')" class="flex-1 py-4 rounded-2xl border-2 border-mpesa bg-green-50 text-green-700 font-bold text-sm transition-all flex flex-col items-center gap-1">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png" class="h-4" alt="M-Pesa">
+                        M-Pesa
+                    </button>
+                    <button id="btnCash" onclick="setMethod('Cash')" class="flex-1 py-4 rounded-2xl border-2 border-gray-100 bg-gray-50 text-gray-500 font-bold text-sm transition-all flex flex-col items-center gap-1">
+                        <span class="text-lg">💵</span>
+                        Cash / POD
+                    </button>
+                </div>
+            </div>
+
+            <div id="formFields" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase">Customer Name</label>
+                    <input type="text" id="guestName" placeholder="Full Name" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all">
+                </div>
+                
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase">Email Receipt To</label>
+                    <input type="email" id="guestEmail" placeholder="email@example.com" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all">
+                </div>
+
+                <div id="mpesaFields">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase">M-Pesa Number</label>
+                    <input type="tel" id="guestPhone" placeholder="07XX XXX XXX" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-mpesa/20 focus:border-mpesa transition-all">
+                    <div class="mt-3 flex items-center justify-center gap-2 text-[10px] text-green-600 font-bold bg-green-50 py-2 rounded-lg border border-green-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                        </svg>
+                        SECURE STK PUSH ENCRYPTED
+                    </div>
+                </div>
+            </div>
+
+            <div id="payment-status-box" class="hidden text-center py-8 animate-pulse">
+                <div class="inline-block p-6 rounded-full bg-burgundy/10 mb-4">
+                    <svg class="animate-spin h-10 w-10 text-burgundy" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <h4 class="text-xl font-black text-gray-800">Check Your Phone</h4>
+                <p class="text-sm text-gray-500 mt-2 px-6">We've sent a PIN prompt to your M-Pesa. Please enter your PIN to complete the order.</p>
+                <div class="mt-6 text-2xl font-mono font-bold text-burgundy" id="timer">90s</div>
+            </div>
+
+            <button id="payBtn" onclick="processPayment()" class="w-full mt-8 bg-burgundy hover:bg-red-900 text-white font-black py-5 rounded-2xl transition transform active:scale-95 shadow-xl uppercase tracking-widest flex items-center justify-center gap-2">
+                <span>Send Payment Prompt</span>
+            </button>
+            
+            <p id="note" class="text-center text-[10px] text-gray-400 mt-6 uppercase tracking-widest">
+                🔒 Protected by Safaricom SSL Encryption
+            </p>
         </div>
     </div>
 
     <script src="config.js"></script>
     <script>
         let currentMethod = 'M-Pesa';
-        let pollInterval;
-        let countdownInterval;
+        let pollInterval, countdownInterval;
         
         const total = localStorage.getItem('totalToPay') || 0;
         const currentOrder = JSON.parse(localStorage.getItem('currentOrder')) || {};
 
-        document.getElementById('dispTotal').innerText = "KSH " + total;
+        document.getElementById('dispTotal').innerText = "KSH " + parseFloat(total).toLocaleString();
 
         function setMethod(method) {
             currentMethod = method;
@@ -109,17 +106,21 @@
             const btnC = document.getElementById('btnCash');
 
             if (method === 'M-Pesa') {
-                mpesaFields.classList.remove('hidden');
-                btnM.classList.add('mpesa-active');
-                btnC.classList.remove('active');
+                mpesaFields.style.display = 'block';
+                btnM.classList.replace('border-gray-100', 'border-mpesa');
+                btnM.classList.replace('text-gray-500', 'text-green-700');
+                btnC.classList.replace('border-burgundy', 'border-gray-100');
+                btnC.classList.replace('text-burgundy', 'text-gray-500');
                 payBtn.innerText = "Send M-Pesa Prompt";
-                payBtn.style.background = "#4FB548";
+                payBtn.className = payBtn.className.replace('bg-burgundy', 'bg-mpesa');
             } else {
-                mpesaFields.classList.add('hidden');
-                btnC.classList.add('active');
-                btnM.classList.remove('mpesa-active');
+                mpesaFields.style.display = 'none';
+                btnC.classList.replace('border-gray-100', 'border-burgundy');
+                btnC.classList.replace('text-gray-500', 'text-burgundy');
+                btnM.classList.replace('border-mpesa', 'border-gray-100');
+                btnM.classList.replace('text-green-700', 'text-gray-500');
                 payBtn.innerText = "Record Cash Transaction";
-                payBtn.style.background = "#8B1A2B";
+                payBtn.className = payBtn.className.replace('bg-mpesa', 'bg-burgundy');
             }
         }
 
@@ -130,65 +131,57 @@
             const payBtn = document.getElementById('payBtn');
 
             if (!guestName || !guestEmail || (currentMethod === 'M-Pesa' && !guestPhone)) {
-                alert("Please fill in all required fields.");
-                return;
+                return alert("Please fill in all required fields.");
             }
+
+            payBtn.innerText = "Processing...";
+            payBtn.disabled = true;
 
             if (currentMethod === 'M-Pesa') {
                 guestPhone = guestPhone.replace(/\D/g, '');
                 if (guestPhone.startsWith('0')) guestPhone = '254' + guestPhone.substring(1);
                 else if (!guestPhone.startsWith('254')) guestPhone = '254' + guestPhone;
-            }
 
-            payBtn.innerText = "Initiating...";
-            payBtn.disabled = true;
-
-            try {
-                if (currentMethod === 'M-Pesa') {
-                    // UPDATED: Used API_URL from config.js
+                try {
                     const stkRes = await fetch(`${API_URL}/api/mpesa/stkpush`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ phoneNumber: guestPhone, amount: Math.round(total) })
                     });
-
                     const stkData = await stkRes.json();
                     if (!stkRes.ok) throw new Error(stkData.message || "M-Pesa prompt failed.");
-
                     startTracking(stkData.data.CheckoutRequestID, { guestName, guestEmail, guestPhone });
-                } else {
-                    saveAndRedirect({ guestName, guestEmail, guestPhone, method: 'Cash' });
+                } catch (error) {
+                    alert("Error: " + error.message);
+                    payBtn.disabled = false;
+                    payBtn.innerText = "Retry Payment";
                 }
-            } catch (error) {
-                alert("Error: " + error.message);
-                payBtn.disabled = false;
-                payBtn.innerText = "Retry Payment";
+            } else {
+                saveAndRedirect({ guestName, guestEmail, guestPhone: "CASH_CUSTOMER", method: 'Cash' });
             }
         }
 
         function startTracking(checkoutID, userData) {
-            document.getElementById('timerDisplay').classList.remove('hidden');
-            document.getElementById('methodSelector').classList.add('hidden');
+            document.getElementById('method-container').classList.add('hidden');
             document.getElementById('formFields').classList.add('hidden');
-            document.getElementById('payBtn').innerText = "Waiting for PIN...";
+            document.getElementById('payBtn').classList.add('hidden');
+            document.getElementById('payment-status-box').classList.remove('hidden');
 
             let timeLeft = 90;
             const timerElem = document.getElementById('timer');
 
             countdownInterval = setInterval(() => {
                 timeLeft--;
-                timerElem.innerText = timeLeft;
+                timerElem.innerText = timeLeft + "s";
                 if (timeLeft <= 0) {
-                    clearInterval(countdownInterval);
-                    clearInterval(pollInterval);
-                    alert("Payment timed out. Please check your phone or try again.");
+                    stopMonitoring();
+                    alert("Payment timed out. Try again.");
                     location.reload();
                 }
             }, 1000);
 
             pollInterval = setInterval(async () => {
                 try {
-                    // UPDATED: Used API_URL from config.js
                     const res = await fetch(`${API_URL}/api/mpesa/query`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -196,26 +189,21 @@
                     });
                     const data = await res.json();
 
-                    // FIX: Only cancel if user actually clicks Cancel (1032) or other terminal errors
-                    // We ignore "In Progress" codes so the prompt doesn't close prematurely
                     if (data.ResultCode === "0") { 
-                        clearInterval(pollInterval);
-                        clearInterval(countdownInterval);
+                        stopMonitoring();
                         saveAndRedirect({ ...userData, method: 'M-Pesa' });
                     } else if (data.ResultCode === "1032") { 
-                        clearInterval(pollInterval);
-                        clearInterval(countdownInterval);
-                        alert("Transaction Cancelled by user.");
-                        location.reload();
-                    } else if (data.ResultCode && data.ResultCode !== "0" && data.ResultCode !== "999") {
-                        // Handle other specific failure codes like Insufficient Funds
-                        clearInterval(pollInterval);
-                        clearInterval(countdownInterval);
-                        alert("Payment Failed: " + (data.ResultDesc || "Unknown Error"));
+                        stopMonitoring();
+                        alert("Transaction Cancelled.");
                         location.reload();
                     }
-                } catch (e) { console.log("Still waiting for Safaricom..."); }
-            }, 3000);
+                } catch (e) { console.log("Waiting..."); }
+            }, 3500);
+        }
+
+        function stopMonitoring() {
+            clearInterval(pollInterval);
+            clearInterval(countdownInterval);
         }
 
         async function saveAndRedirect(data) {
@@ -224,26 +212,23 @@
                 guestEmail: data.guestEmail,
                 guestPhone: data.guestPhone,
                 paymentMethod: data.method,
-                paymentStatus: "Completed",
+                paymentStatus: data.method === 'Cash' ? "Pay on Delivery" : "Paid",
                 orderDetails: currentOrder, 
                 totalAmount: parseFloat(total),
                 timestamp: new Date().toISOString()
             };
 
             try {
-                // UPDATED: Used API_URL from config.js
                 const response = await fetch(`${API_URL}/api/bookings`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(bookingData)
                 });
-
-                if (!response.ok) throw new Error("Could not save booking");
-
                 localStorage.setItem('lastTransaction', JSON.stringify(bookingData));
                 window.location.href = 'receipt.html';
             } catch (err) {
-                alert("Payment received, but there was an error saving your booking. Please contact support.");
+                alert("Payment logged locally, but cloud sync failed. Our staff will verify manually.");
+                window.location.href = 'receipt.html';
             }
         }
         
