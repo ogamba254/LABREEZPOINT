@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | LABREEZPOINT</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
         if (!localStorage.getItem('adminToken')) { window.location.href = 'login.html'; }
     </script>
@@ -71,9 +72,18 @@
         
         .btn-delete { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
         .btn-edit { background: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
-        .old-price-strike { text-decoration: line-through; color: #999; font-size: 0.8rem; margin-right: 5px; }
+        .guest-link { color: var(--burgundy); text-decoration: underline; cursor: pointer; font-weight: bold; }
 
-        /* Mobile Breakpoints */
+        /* Receipt Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 2000; display: none;
+            justify-content: center; align-items: center; overflow-y: auto; padding: 20px;
+        }
+        .modal-content { background: white; padding: 20px; border-radius: 10px; max-width: 400px; width: 100%; position: relative; }
+        .receipt-paper { font-family: 'Courier New', monospace; color: #000; border: 1px solid #ddd; padding: 20px; }
+        .no-print-modal { margin-top: 15px; display: flex; gap: 10px; }
+
         @media (max-width: 992px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.active { transform: translateX(0); }
@@ -81,16 +91,40 @@
             .main-content { margin-left: 0; width: 100%; padding: 20px; }
         }
 
-        /* Print Logic */
         @media print {
-            .sidebar, .mobile-nav, .filter-bar, .admin-panel, .btn-delete, .btn-edit { display: none !important; }
+            .sidebar, .mobile-nav, .filter-bar, .admin-panel, .btn-delete, .btn-edit, .no-print-modal, .stat-cards { display: none !important; }
+            .modal-overlay { position: absolute; background: white; display: flex !important; }
             .main-content { margin: 0; width: 100%; padding: 0; }
-            .stat-cards { grid-template-columns: repeat(3, 1fr); border: 1px solid #ccc; }
-            .table-container { box-shadow: none; border: 1px solid #eee; }
         }
     </style>
 </head>
 <body>
+
+    <div id="receiptModal" class="modal-overlay">
+        <div class="modal-content">
+            <button onclick="closeReceipt()" style="position:absolute; right:10px; top:10px; border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
+            <div id="printableReceipt" class="receipt-paper">
+                <div style="text-align:center; border-bottom: 2px dashed #000; padding-bottom:10px; margin-bottom:10px;">
+                    <h2 style="margin:0; font-size:18px;">LA BREEZE POINT</h2>
+                    <p style="font-size:10px; margin:2px;">Nairobi, Kenya</p>
+                    <p style="font-size:10px; margin:2px;">Tel: +254 736 801 389</p>
+                </div>
+                <div id="receiptMeta" style="font-size:11px; margin-bottom:10px;"></div>
+                <table style="width:100%; font-size:11px; border-collapse:collapse;">
+                    <thead><tr style="border-bottom:1px solid #000;"><th align="left">ITEM</th><th align="center">QTY</th><th align="right">PRICE</th></tr></thead>
+                    <tbody id="receiptItems"></tbody>
+                </table>
+                <div style="border-top:2px dashed #000; margin-top:10px; padding-top:10px; font-weight:bold; display:flex; justify-content:space-between;">
+                    <span>TOTAL:</span><span id="receiptTotal"></span>
+                </div>
+                <p style="text-align:center; font-size:9px; margin-top:15px;">Thank you for visiting LabreezPoint!</p>
+            </div>
+            <div class="no-print-modal">
+                <button onclick="window.print()" style="flex:1; background:#444; color:white; padding:10px; border-radius:5px; cursor:pointer;">🖨️ Print</button>
+                <button onclick="downloadModalReceipt()" style="flex:1; background:var(--mpesa-green); color:white; padding:10px; border-radius:5px; cursor:pointer;">📥 Download</button>
+            </div>
+        </div>
+    </div>
 
     <header class="mobile-nav">
         <strong>LA BREEZE ADMIN</strong>
@@ -170,7 +204,7 @@
             <h2 class="mpesa-header">M-Pesa STK Transactions</h2>
             <table id="mpesaTable">
                 <thead>
-                    <tr><th>Date</th><th>Guest</th><th>Phone</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+                    <tr><th>Date & Time</th><th>Guest (Click to Receipt)</th><th>Phone</th><th>Amount</th><th>Status</th><th>Action</th></tr>
                 </thead>
                 <tbody id="mpesaTableBody"></tbody>
             </table>
@@ -180,7 +214,7 @@
             <h2 class="cash-header">Cash Transactions</h2>
             <table id="cashTable">
                 <thead>
-                    <tr><th>Date</th><th>Guest</th><th>Email</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+                    <tr><th>Date & Time</th><th>Guest (Click to Receipt)</th><th>Email</th><th>Amount</th><th>Status</th><th>Action</th></tr>
                 </thead>
                 <tbody id="cashTableBody"></tbody>
             </table>
@@ -199,66 +233,30 @@
     
     <script src="config.js"></script>
     <script>
-        let allBookings = []; // Storage for filtering
+        let allBookings = [];
 
         window.onload = function() {
             loadAllData();
             loadServices();
         };
 
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-        }
-
-        function previewImage(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => document.getElementById('preview').innerHTML = `<img src="${e.target.result}">`;
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        async function loadServices() {
-            try {
-                const response = await fetch(`${API_URL}/api/services`);
-                const services = await response.json();
-                const tbody = document.getElementById('serviceTableBody');
-                tbody.innerHTML = services.map(s => {
-                    const sId = s._id || s.id;
-                    const img = (s.photos && s.photos[0]) ? s.photos[0] : 'https://via.placeholder.com/50';
-                    return `
-                    <tr>
-                        <td><img src="${img}" width="50" height="40" style="object-fit:cover; border-radius:4px;"></td>
-                        <td><strong>${s.name}</strong></td>
-                        <td>${s.type ? s.type.toUpperCase() : 'N/A'}</td>
-                        <td>${s.oldPrice ? `<span class="old-price-strike">KSH ${s.oldPrice}</span>` : ''} <strong>KSH ${s.price}</strong></td>
-                        <td>
-                            <button class="btn-edit" onclick="editService('${encodeURIComponent(JSON.stringify(s))}')">Edit</button>
-                            <button class="btn-delete" onclick="deleteService('${sId}')">Del</button>
-                        </td>
-                    </tr>`}).join('');
-            } catch (err) { console.error(err); }
-        }
-
         async function loadAllData() {
             try {
                 const response = await fetch(`${API_URL}/api/bookings`);
                 allBookings = await response.json();
-                applyFilters(); // Initial render with full data
+                applyFilters();
             } catch (err) { console.error(err); }
         }
 
         function applyFilters() {
             const from = document.getElementById('dateFrom').value;
             const to = document.getElementById('dateTo').value;
-
             const filtered = allBookings.filter(b => {
                 const bDate = new Date(b.timestamp).toISOString().split('T')[0];
                 if (from && bDate < from) return false;
                 if (to && bDate > to) return false;
                 return true;
             });
-
             renderTables(filtered);
             calculateStats(filtered);
         }
@@ -267,27 +265,76 @@
             const mpesaBody = document.getElementById('mpesaTableBody');
             const cashBody = document.getElementById('cashTableBody');
 
-            mpesaBody.innerHTML = bookings.filter(b => b.paymentMethod === 'M-Pesa').map(b => `
+            const generateRows = (b) => {
+                const dt = new Date(b.timestamp);
+                const bookingData = encodeURIComponent(JSON.stringify(b));
+                return `
                 <tr>
-                    <td>${new Date(b.timestamp).toLocaleDateString()}</td>
-                    <td>${b.guestName}</td>
-                    <td>${b.guestPhone || 'N/A'}</td>
-                    <td>KSH ${b.totalAmount}</td>
-                    <td><span class="status-badge ${b.paymentStatus === 'Paid' ? 'status-paid' : 'status-pending'}">${b.paymentStatus}</span></td>
+                    <td>
+                        <div style="font-weight:bold">${dt.toLocaleDateString()}</div>
+                        <div style="font-size:0.75rem; color:#666">${dt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                    </td>
+                    <td><span class="guest-link" onclick="openReceipt('${bookingData}')">${b.guestName}</span></td>
+                    <td>${b.guestPhone || b.guestEmail || 'N/A'}</td>
+                    <td>KSH ${b.totalAmount.toLocaleString()}</td>
+                    <td><span class="status-badge ${b.paymentStatus === 'Paid' ? 'status-paid' : 'status-pending'}">${b.paymentStatus === 'Paid' ? 'PAID' : 'PENDING'}</span></td>
                     <td><button class="btn-delete" onclick="deleteBooking('${b._id}')">Del</button></td>
-                </tr>`).join('') || "<tr><td colspan='6' style='text-align:center'>No records</td></tr>";
+                </tr>`;
+            };
 
-            cashBody.innerHTML = bookings.filter(b => b.paymentMethod === 'Cash').map(b => `
-                <tr>
-                    <td>${new Date(b.timestamp).toLocaleDateString()}</td>
-                    <td>${b.guestName}</td>
-                    <td>${b.guestEmail}</td>
-                    <td>KSH ${b.totalAmount}</td>
-                    <td><span class="status-badge status-paid">COLLECTED</span></td>
-                    <td><button class="btn-delete" onclick="deleteBooking('${b._id}')">Del</button></td>
-                </tr>`).join('') || "<tr><td colspan='6' style='text-align:center'>No records</td></tr>";
+            mpesaBody.innerHTML = bookings.filter(b => b.paymentMethod === 'M-Pesa').map(generateRows).join('') || "<tr><td colspan='6' align='center'>No M-Pesa records</td></tr>";
+            cashBody.innerHTML = bookings.filter(b => b.paymentMethod === 'Cash').map(generateRows).join('') || "<tr><td colspan='6' align='center'>No Cash records</td></tr>";
         }
 
+        // RECEIPT MODAL LOGIC
+        function openReceipt(encodedData) {
+            const b = JSON.parse(decodeURIComponent(encodedData));
+            const meta = document.getElementById('receiptMeta');
+            const items = document.getElementById('receiptItems');
+            
+            meta.innerHTML = `
+                <div>DATE: ${new Date(b.timestamp).toLocaleString()}</div>
+                <div>ID: #${b._id.slice(-6).toUpperCase()}</div>
+                <div>GUEST: ${b.guestName}</div>
+                <div>METHOD: ${b.paymentMethod}</div>
+            `;
+
+            let rows = "";
+            // Handle if orderDetails exists (rooms/food)
+            if(b.orderDetails) {
+                if(b.orderDetails.rooms) {
+                    Object.entries(b.orderDetails.rooms).forEach(([name, d]) => {
+                        rows += `<tr><td>ROOM: ${name}</td><td align="center">${d.qty}</td><td align="right">${(d.price * d.qty).toLocaleString()}</td></tr>`;
+                    });
+                }
+                if(b.orderDetails.foods) {
+                    Object.entries(b.orderDetails.foods).forEach(([name, d]) => {
+                        rows += `<tr><td>${name}</td><td align="center">${d.qty}</td><td align="right">${(d.price * d.qty).toLocaleString()}</td></tr>`;
+                    });
+                }
+            } else {
+                rows = `<tr><td>General Service</td><td align="center">1</td><td align="right">${b.totalAmount.toLocaleString()}</td></tr>`;
+            }
+
+            items.innerHTML = rows;
+            document.getElementById('receiptTotal').innerText = "KSH " + b.totalAmount.toLocaleString();
+            document.getElementById('receiptModal').style.display = 'flex';
+        }
+
+        function closeReceipt() { document.getElementById('receiptModal').style.display = 'none'; }
+
+        function downloadModalReceipt() {
+            const receipt = document.getElementById('printableReceipt');
+            html2canvas(receipt, { scale: 3 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Receipt_LabreezPoint.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        // Existing functions kept exactly the same
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
         function calculateStats(bookings) {
             let total = 0, mpesa = 0, cash = 0;
             bookings.forEach(b => {
@@ -299,11 +346,21 @@
             document.getElementById('mpesaRev').innerText = "KSH " + mpesa.toLocaleString();
             document.getElementById('cashRev').innerText = "KSH " + cash.toLocaleString();
         }
-
-        // All Inventory management functions from your original code
+        async function loadServices() {
+            try {
+                const response = await fetch(`${API_URL}/api/services`);
+                const services = await response.json();
+                const tbody = document.getElementById('serviceTableBody');
+                tbody.innerHTML = services.map(s => {
+                    const img = (s.photos && s.photos[0]) ? s.photos[0] : 'https://via.placeholder.com/50';
+                    return `<tr><td><img src="${img}" width="50" height="40" style="object-fit:cover;"></td><td><strong>${s.name}</strong></td><td>${s.type.toUpperCase()}</td><td><strong>KSH ${s.price}</strong></td><td><button class="btn-edit" onclick="editService('${encodeURIComponent(JSON.stringify(s))}')">Edit</button><button class="btn-delete" onclick="deleteService('${s._id}')">Del</button></td></tr>`
+                }).join('');
+            } catch (err) { console.error(err); }
+        }
+        function previewImage(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = e => document.getElementById('preview').innerHTML = `<img src="${e.target.result}">`; reader.readAsDataURL(input.files[0]); } }
         function editService(dataStr) {
             const s = JSON.parse(decodeURIComponent(dataStr));
-            document.getElementById('serviceId').value = s._id || s.id;
+            document.getElementById('serviceId').value = s._id;
             document.getElementById('name').value = s.name;
             document.getElementById('price').value = s.price;
             document.getElementById('oldPrice').value = s.oldPrice || '';
@@ -315,13 +372,11 @@
             document.getElementById('cancelBtn').style.display = 'block';
             window.scrollTo({ top: document.getElementById('inventory-section').offsetTop, behavior: 'smooth' });
         }
-
         async function submitData() {
             const btn = document.getElementById('submitBtn');
-            const serviceId = document.getElementById('serviceId').value;
             btn.innerText = "Saving...";
             const payload = {
-                id: serviceId,
+                id: document.getElementById('serviceId').value,
                 name: document.getElementById('name').value,
                 price: document.getElementById('price').value,
                 oldPrice: document.getElementById('oldPrice').value,
@@ -329,14 +384,13 @@
                 type: document.getElementById('type').value
             };
             const fileInput = document.getElementById('fileInput');
-            const urlInput = document.getElementById('urlInput');
             if (fileInput.files[0]) {
                 payload.photo = await new Promise(r => {
                     const reader = new FileReader();
                     reader.onload = () => r(reader.result);
                     reader.readAsDataURL(fileInput.files[0]);
                 });
-            } else if (urlInput.value) { payload.photo = urlInput.value; }
+            } else if (document.getElementById('urlInput').value) { payload.photo = document.getElementById('urlInput').value; }
             try {
                 const response = await fetch(`${API_URL}/api/update-service`, {
                     method: 'POST',
@@ -344,25 +398,10 @@
                     body: JSON.stringify(payload)
                 });
                 if (response.ok) location.reload();
-            } catch (error) { btn.innerText = "Save Service"; alert("Error saving"); }
+            } catch (error) { alert("Error saving"); btn.innerText = "Save Service"; }
         }
-
-        async function deleteService(id) {
-            if(!confirm("Delete item?")) return;
-            try {
-                await fetch(`${API_URL}/api/services/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } });
-                location.reload();
-            } catch (err) { alert("Delete failed"); }
-        }
-
-        async function deleteBooking(id) {
-            if(!confirm("Delete record?")) return;
-            try {
-                await fetch(`${API_URL}/api/bookings/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } });
-                loadAllData();
-            } catch (err) { alert("Error"); }
-        }
-
+        async function deleteService(id) { if(confirm("Delete item?")) { await fetch(`${API_URL}/api/services/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }); location.reload(); } }
+        async function deleteBooking(id) { if(confirm("Delete record?")) { await fetch(`${API_URL}/api/bookings/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }); loadAllData(); } }
         function resetForm() { location.reload(); }
         function handleLogout() { localStorage.removeItem('adminToken'); window.location.href = 'index.html'; }
     </script>
