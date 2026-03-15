@@ -96,7 +96,7 @@
             width: 100%; 
             border-collapse: collapse; 
             margin-top: 10px; 
-            table-layout: fixed; /* Ensures headers don't overflow */
+            table-layout: fixed;
         }
         .receipt-table th { 
             background: #eee !important; 
@@ -331,7 +331,6 @@
             return filtered;
         }
 
-        // FIXED: Sales Report Logic
         function openFullReport() {
             const filteredData = applyFilters(); 
             const from = document.getElementById('dateFrom').value || "All Time";
@@ -445,7 +444,6 @@
             cashBody.innerHTML = bookings.filter(b => b.paymentMethod === 'Cash').map(generateRows).join('') || "<tr><td colspan='6' align='center'>No records</td></tr>";
         }
 
-        // FIXED: Single Receipt Breakdown Logic
         function openReceipt(encodedData) {
             const b = JSON.parse(decodeURIComponent(encodedData));
             document.getElementById('reportTitle').innerText = "PAYMENT RECEIPT";
@@ -465,7 +463,7 @@
 
             document.getElementById('receiptItems').innerHTML = rows;
             document.getElementById('receiptTotal').innerText = "KSH " + b.totalAmount.toLocaleString();
-            document.getElementById('paymentBreakdown').innerHTML = ""; // Clear for single receipt
+            document.getElementById('paymentBreakdown').innerHTML = ""; 
             document.getElementById('receiptModal').style.display = 'flex';
         }
 
@@ -503,8 +501,30 @@
             window.scrollTo({top:0, behavior:'smooth'});
         }
 
-        async function deleteService(id) { if(confirm("Delete item?")) { await fetch(`${API_URL}/api/services/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }); location.reload(); } }
-        async function deleteBooking(id) { if(confirm("Delete record?")) { await fetch(`${API_URL}/api/bookings/${id}`, { method: 'DELETE' }); loadAllData(); } }
+        // UPDATED: Added Auth Headers and Feedback
+        async function deleteService(id) { 
+            if(confirm("Delete item?")) { 
+                const res = await fetch(`${API_URL}/api/services/${id}`, { 
+                    method: 'DELETE', 
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } 
+                }); 
+                if(res.ok) location.reload();
+                else alert("Delete failed. Check connection.");
+            } 
+        }
+
+        // UPDATED: Added Auth Headers and properly calling loadAllData
+        async function deleteBooking(id) { 
+            if(confirm("Delete record?")) { 
+                const res = await fetch(`${API_URL}/api/bookings/${id}`, { 
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+                }); 
+                if(res.ok) loadAllData(); 
+                else alert("Delete failed. Server might be sleeping.");
+            } 
+        }
+
         function previewImage(i) { if(i.files[0]) { const r=new FileReader(); r.onload=e=>document.getElementById('preview').innerHTML=`<img src="${e.target.result}">`; r.readAsDataURL(i.files[0]); } }
         function closeReceipt() { document.getElementById('receiptModal').style.display='none'; }
         function resetFilters() { document.getElementById('dateFrom').value=''; document.getElementById('dateTo').value=''; applyFilters(); }
