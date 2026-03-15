@@ -45,20 +45,35 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 85px;
+            height: 90px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             position: sticky;
             top: 0;
             z-index: 1000;
         }
+        
+        /* LOGO STYLES - UPDATED TO BE ROUND */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            gap: 12px;
+        }
+        .nav-logo-img {
+            height: 65px; 
+            width: 65px; /* Fixed width for perfect circle */
+            border-radius: 50%; /* Makes it round */
+            object-fit: cover; /* Prevents squishing */
+            filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.1));
+            border: 2px solid #eee; /* Light border to define the circle */
+        }
         .logo-text { 
             font-family: 'Playfair Display', serif;
             color: var(--dark-bg); 
-            font-size: 26px; 
+            font-size: 24px; 
             font-weight: bold; 
-            text-decoration: none; 
             letter-spacing: -1px;
-            z-index: 1001;
+            line-height: 1;
         }
         .logo-text span { color: var(--burgundy); }
         
@@ -254,9 +269,7 @@
 
         @media (max-width: 768px) {
             .top-info { display: none; }
-            
             .menu-toggle { display: flex; }
-
             .nav-links {
                 position: fixed;
                 top: 85px;
@@ -271,19 +284,16 @@
                 text-align: center;
                 box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             }
-
             .nav-links.active { left: 0; }
-
             .hero-floating-card { display: none; }
-            
             .footer-grid { grid-template-columns: 1fr; text-align: center; }
             .footer-col div { justify-content: center; }
         }
 
         @media (max-width: 480px) {
-            .logo-text { font-size: 20px; }
+            .logo-text { font-size: 18px; }
+            .nav-logo-img { height: 50px; width: 50px; }
             .hero-btns .btn-book { width: 100%; }
-            .showcase-section { padding: 60px 15px; }
         }
     </style>
 </head>
@@ -295,7 +305,10 @@
     </div>
 
     <nav>
-        <a href="index.html" class="logo-text">LA <span>BREEZE</span> POINT</a>
+        <a href="index.html" class="logo-container">
+            <img src="Gemini_Generated_Image_nb43kwnb43kwnb43(1).png" alt="La Breeze Point Logo" class="nav-logo-img">
+            <div class="logo-text">LA <span>BREEZE</span> POINT</div>
+        </a>
         
         <div class="menu-toggle" id="mobile-menu">
             <span></span>
@@ -341,16 +354,17 @@
             <p style="color: var(--burgundy); font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 3px;">Our Specialties</p>
             <h2>Signature Experiences</h2>
         </div>
-        
-        <div class="card-container" id="specialties-container">
-            </div>
+        <div class="card-container" id="specialties-container"></div>
     </section>
 
     <footer>
         <div class="footer-grid">
             <div class="footer-col">
-                <a href="#" class="logo-text" style="color: white;">LA <span>BREEZE</span> POINT</a>
-                <p style="margin-top: 20px; line-height: 1.8; font-size: 14px;">Established with a vision to redefine African hospitality, we combine modern luxury with local warmth to create unforgettable moments.</p>
+                <a href="index.html" class="logo-container" style="margin-bottom: 20px;">
+                    <img src="Gemini_Generated_Image_nb43kwnb43kwnb43(1).png" alt="La Breeze Point Logo" class="nav-logo-img">
+                    <div class="logo-text" style="color: white;">LA <span>BREEZE</span> POINT</div>
+                </a>
+                <p style="line-height: 1.8; font-size: 14px;">Established with a vision to redefine African hospitality, we combine modern luxury with local warmth to create unforgettable moments.</p>
             </div>
             <div class="footer-col">
                 <h4>Navigation</h4>
@@ -389,14 +403,13 @@
         // Mobile Menu Logic
         const menuToggle = document.getElementById('mobile-menu');
         const navLinks = document.getElementById('nav-list');
-
         menuToggle.addEventListener('click', () => {
             navLinks.classList.toggle('active');
         });
 
+        // Hero Slide Logic
         let currentSlide = 0;
         const slides = document.querySelectorAll('.hero-slide');
-        
         function nextSlide() {
             slides[currentSlide].classList.remove('active');
             currentSlide = (currentSlide + 1) % slides.length;
@@ -404,6 +417,7 @@
         }
         setInterval(nextSlide, 5000);
 
+        // Parallax Logic
         window.addEventListener('scroll', function() {
             const scrollValue = window.scrollY;
             const parallaxBg = document.getElementById('parallax-bg');
@@ -412,6 +426,7 @@
             }
         });
 
+        // Cart Badge Logic
         function updateCartBadge() {
             const order = JSON.parse(localStorage.getItem('currentOrder')) || { rooms: {}, foods: {} };
             const countDisplay = document.getElementById('cart-count');
@@ -426,6 +441,7 @@
             }
         }
 
+        // Service Loading Logic
         async function loadLiveServices() {
             try {
                 const response = await fetch(`${API_URL}/api/services`);
@@ -435,13 +451,11 @@
                     container.innerHTML = ""; 
                     services.forEach(item => {
                         const img = (item.photos && item.photos.length > 0) ? item.photos[0] : 'https://via.placeholder.com/400x300';
-                        
                         let targetPage = "dining.html"; 
                         const typeLower = item.type ? item.type.toLowerCase() : "";
                         if (typeLower.includes('accommodation') || typeLower.includes('room')) {
                             targetPage = "booking.html";
                         }
-
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
